@@ -171,4 +171,39 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui
   background: #fff;
 }
 
+/* ===== Full-bleed util ===== */
+.full-bleed {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}
+
+/* HERO ocupa toda a largura e altura consistente */
+.hero-carousel.full-bleed {
+  overflow: hidden;
+  border-radius: 0;               /* sem cantos arredondados */
+}
+.hero-carousel .carousel-track { display:flex; transition: transform .5s ease; }
+.hero-carousel .slide { min-width:100%; flex-shrink:0; }
+.hero-carousel .slide img {
+  display:block;
+  width:100%;
+  height: clamp(220px, 28vh, 340px); /* ajuste como preferir */
+  object-fit: cover;
+  border-radius: 0;               /* garante sem bordas */
+}
+.hero-carousel .dots {
+  position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
+  display:flex; gap:6px;
+}
+.hero-carousel .dots button{
+  width:8px;height:8px;border-radius:50%;border:0;background:rgba(255,255,255,.6);
+}
+.hero-carousel .dots button.is-active{ background:#fff; }
+
+
+
 
