@@ -119,3 +119,56 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui
 }
 .badges-centered{ display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap; }
 .badge{ padding:6px 12px; border:1px solid #e5e7eb; border-radius:999px; background:#fff; font-weight:700; font-size:12px; }
+
+/* HERO CAROUSEL */
+.hero-carousel {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.hero-carousel .carousel-track {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+  width: 100%;
+}
+
+.hero-carousel .slide {
+  min-width: 100%;
+  flex-shrink: 0;
+}
+
+.hero-carousel img {
+  width: 100%;
+  height: 280px;      /* ajuste aqui: 220px–320px funciona bem */
+  object-fit: cover;  /* garante que a imagem preencha sem deformar */
+  display: block;
+}
+
+/* Dots (navegação) */
+.hero-carousel .dots {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+
+.hero-carousel .dots button {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.6);
+  cursor: pointer;
+  transition: background .2s;
+}
+.hero-carousel .dots button.is-active {
+  background: #fff;
+}
+
+
