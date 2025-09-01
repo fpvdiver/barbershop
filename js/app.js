@@ -21,3 +21,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  const track = document.querySelector('.hero-carousel .carousel-track');
+  const slides = Array.from(track.children);
+  const dotsContainer = document.querySelector('.hero-carousel .dots');
+
+  // criar dots
+  slides.forEach((_, i) => {
+    const btn = document.createElement('button');
+    if (i === 0) btn.classList.add('is-active');
+    btn.addEventListener('click', () => goToSlide(i));
+    dotsContainer.appendChild(btn);
+  });
+
+  const dots = Array.from(dotsContainer.children);
+  let index = 0;
+
+  function goToSlide(i) {
+    index = i;
+    track.style.transform = `translateX(-${100 * i}%)`;
+    dots.forEach((d, j) => d.classList.toggle('is-active', j === i));
+  }
+
+  // autoplay
+  setInterval(() => {
+    index = (index + 1) % slides.length;
+    goToSlide(index);
+  }, 4000); // 4s
+});
