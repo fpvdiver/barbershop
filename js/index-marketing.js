@@ -1,7 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // rotas existentes
-  document.getElementById('btn-agendar')?.addEventListener('click', () => location.href='calendario.html');
-  document.getElementById('btn-area')?.addEventListener('click', () => location.href='login.html');
+
 
   // inicializa todos os carrosseis da página
   document.querySelectorAll('.carousel').forEach(initCarousel);
@@ -47,3 +45,4 @@ function initCarousel(root){
   go(i); start();
   document.addEventListener('visibilitychange', ()=> document.hidden ? stop() : start());
 }
+
