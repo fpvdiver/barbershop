@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("auth", JSON.stringify({ email, time: Date.now() }));
 
       alert("Login realizado com sucesso!");
-      window.location.href = "relatorios.html"; // redireciona para relatórios
+      window.location.href = "resumo.html"; // redireciona para relatórios
     } else {
       alert("E-mail ou senha inválidos.");
     }
@@ -35,3 +35,4 @@ document.addEventListener("DOMContentLoaded", () => {
     history.back();
   });
 });
+
