@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Configurações – Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    .accordion { display:grid; gap:12px; padding:12px; }
+    .acc-item { border:1px solid var(--border); border-radius:12px; background:var(--card); overflow:hidden; }
+    .acc-head { display:flex; justify-content:space-between; align-items:center; gap:8px;
+      padding:14px 16px; cursor:pointer; font-weight:800; }
+    .acc-head .right { display:flex; gap:8px; align-items:center; color:var(--muted); }
+    .acc-body { display:none; padding:12px 16px 16px; border-top:1px solid var(--border); }
+    .acc-item.open .acc-body { display:block; }
+    .acc-item.open .acc-head .chev { transform: rotate(180deg); }
+    .chev { transition: transform .15s ease; }
+
+    .row { display:grid; gap:10px; grid-template-columns:1fr; }
+    @media (min-width: 860px) { .row-2 { grid-template-columns:1fr 1fr } .row-3 { grid-template-columns:repeat(3,1fr) } }
+
+    .info { font-size:12px; color:var(--muted); }
+    .thumb { width:100%; max-width:540px; aspect-ratio: 16/9; border-radius:12px; border:1px dashed var(--border); object-fit:cover; background:#f3f4f6 }
+    .badge.st-online{ background:#10b98122; border-color:#10b98140; color:#065f46 }
+    .badge.st-fechado{ background:#ef444422; border-color:#ef444440; color:#7f1d1d }
+
+    .inline { display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-hidden="true">
+    <div class="brand"><img src="../images/logobarba.png" alt="logo" /><h2>Admin</h2></div>
+    <nav class="menu" role="navigation">
+      <a href="index.html">Dashboard</a>
+      <a href="agendamentos.html">Agendamentos</a>
+      <a href="clientes.html">Clientes</a>
+      <a href="profissionais.html">Profissionais</a>
+      <a href="financeiro.html">Financeiro</a>
+      <a href="campanhas.html">Campanhas</a>
+      <a href="relatorios.html">Relatórios</a>
+      <a href="config.html" class="active">Configurações</a>
+    </nav>
+  </aside>
+  <div class="overlay" id="overlay" hidden></div>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="btnMenu" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <h1 class="title">Configurações</h1>
+      <div class="user">
+        <button id="logout" class="ghost-btn">Sair</button>
+      </div>
+    </header>
+
+    <section class="accordion">
+      <!-- Empresa & Horários -->
+      <div class="acc-item open" id="acc-empresa">
+        <div class="acc-head" data-acc="acc-empresa">
+          <div>Empresa & Horários</div>
+          <div class="right"><span class="muted">nome, endereço, WhatsApp, expediente</span> <span class="chev">▾</span></div>
+        </div>
+        <div class="acc-body">
+          <div class="row row-2">
+            <label>Nome da barbearia
+              <input id="empNome" class="ghost-btn" placeholder="Mineiro BarberShop">
+            </label>
+            <label>Telefone (WhatsApp)
+              <input id="empWhats" class="ghost-btn" placeholder="11 90000-0000">
+            </label>
+            <label>Endereço (link do Maps)
+              <input id="empMaps" class="ghost-btn" placeholder="https://maps.google.com/?q=Rua Exemplo, 123">
+            </label>
+          </div>
+          <div class="row row-3">
+            <label>Seg–Sex
+              <input id="hSem" class="ghost-btn" placeholder="09:00–20:00">
+            </label>
+            <label>Sábado
+              <input id="hSab" class="ghost-btn" placeholder="09:00–18:00">
+            </label>
+            <label>Domingo
+              <input id="hDom" class="ghost-btn" placeholder="Fechado">
+            </label>
+          </div>
+          <div class="inline" style="margin-top:10px">
+            <button class="ghost-btn" id="saveEmpresa">Salvar</button>
+            <span class="info">Essas infos aparecem no rodapé/nav do site e na página do Google.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Integrações -->
+      <div class="acc-item" id="acc-integracoes">
+        <div class="acc-head" data-acc="acc-integracoes">
+          <div>Integrações</div>
+          <div class="right"><span class="muted">Supabase / n8n / Google Calendar</span> <span class="chev">▾</span></div>
+        </div>
+        <div class="acc-body">
+          <div class="row row-2">
+            <label>n8n – Base URL
+              <input id="n8nBase" class="ghost-btn" placeholder="https://n8n.suaempresa.com/webhook">
+            </label>
+            <label>Supabase – URL
+              <input id="sbUrl" class="ghost-btn" placeholder="https://xxxx.supabase.co">
+            </label>
+            <label>Supabase – Anon Key
+              <input id="sbAnon" class="ghost-btn" placeholder="************************">
+            </label>
+            <label>Google Calendar – ID Calendário
+              <input id="gcalId" class="ghost-btn" placeholder="barbearia@gmail.com">
+            </label>
+          </div>
+          <div class="inline" style="margin-top:10px">
+            <button class="ghost-btn" id="saveIntegr">Salvar</button>
+            <span class="info">As chaves ficam apenas no servidor/n8n em produção.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Página Inicial -->
+      <div class="acc-item" id="acc-home">
+        <div class="acc-head" data-acc="acc-home">
+          <div>Página Inicial</div>
+          <div class="right"><span class="muted">logo, banners do carrossel, sticker do status</span> <span class="chev">▾</span></div>
+        </div>
+        <div class="acc-body">
+          <h3 style="margin:0 0 8px">Logo</h3>
+          <div class="row row-2">
+            <label>Logo (URL)
+              <input id="homeLogo" class="ghost-btn" placeholder="https://…/logo.png">
+            </label>
+            <div class="inline">
+              <img id="prevLogo" class="thumb" style="max-width:220px; aspect-ratio:1/1">
+            </div>
+          </div>
+
+          <h3 style="margin:16px 0 8px">Sticker (status)</h3>
+          <div class="row row-2">
+            <label>Status atual
+              <select id="homeStatus" class="ghost-btn">
+                <option value="online">Online (verde)</option>
+                <option value="fechado">Fechado (vermelho)</option>
+              </select>
+            </label>
+            <div class="inline">
+              <span id="stPreview" class="badge st-online">online</span>
+              <span class="info">Você pode automatizar pelo horário de funcionamento via n8n.</span>
+            </div>
+          </div>
+
+          <h3 style="margin:16px 0 8px">Carrossel (3 itens)</h3>
+          <!-- 3 banners -->
+          <div id="banners">
+            <!-- itens gerados via JS para evitar repetição de HTML -->
+          </div>
+
+          <div class="inline" style="margin-top:10px">
+            <button class="ghost-btn" id="saveHome">Salvar</button>
+            <span class="info">O front lê esse JSON e atualiza logo/carrossel/sticker.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagamentos -->
+      <div class="acc-item" id="acc-pay">
+        <div class="acc-head" data-acc="acc-pay">
+          <div>Pagamentos</div>
+          <div class="right"><span class="muted">PIX, recebedor, gateway</span> <span class="chev">▾</span></div>
+        </div>
+        <div class="acc-body">
+          <div class="row row-2">
+            <label>Chave PIX
+              <input id="pixKey" class="ghost-btn" placeholder="chave@pix.com.br">
+            </label>
+            <label>Recebedor
+              <input id="pixName" class="ghost-btn" placeholder="Razão Social ou Nome">
+            </label>
+            <label>Endpoint QRCode (n8n/gateway)
+              <input id="pixEndpoint" class="ghost-btn" placeholder="https://…/qrcode">
+            </label>
+          </div>
+          <div class="inline" style="margin-top:10px">
+            <button class="ghost-btn" id="savePay">Salvar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- WhatsApp -->
+      <div class="acc-item" id="acc-whats">
+        <div class="acc-head" data-acc="acc-whats">
+          <div>WhatsApp</div>
+          <div class="right"><span class="muted">provedor, token, template padrão</span> <span class="chev">▾</span></div>
+        </div>
+        <div class="acc-body">
+          <div class="row row-2">
+            <label>Provedor
+              <select id="waProvider" class="ghost-btn">
+                <option value="gupshup">Gupshup</option>
+                <option value="360dialog">360dialog</option>
+                <option value="meta-cloud">Meta Cloud API</option>
+                <option value="zapflow">Outro via n8n</option>
+              </select>
+            </label>
+            <label>Token/API Key
+              <input id="waToken" class="ghost-btn" placeholder="************************">
+            </label>
+            <label>Template padrão (ex.: confirmação)
+              <input id="waTemplate" class="ghost-btn" placeholder="Olá {{nome}}, seu agendamento foi confirmado para {{data}} às {{hora}}.">
+            </label>
+          </div>
+          <div class="inline" style="margin-top:10px">
+            <button class="ghost-btn" id="saveWhats">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="js/ui-enhancements.js"></script>
+<script src="js/ui-extras.js"></script>
+<script src="js/configuracoes.js"></script>
+<script src="js/offcanvas.js"></script>
+</body>
+</html>

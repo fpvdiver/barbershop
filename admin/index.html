@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Painel – Mineiro Barbershop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar (off-canvas no mobile) -->
+  <aside class="sidebar" id="sidebar" aria-hidden="true">
+    <div class="brand">
+      <img src="../images/logobarba.png" alt="bigatto's barber" />
+    </div>
+    <nav class="menu" role="navigation">
+      <a href="index.html" class="active">Dashboard</a>
+      <a href="agendamentos.html">Agendamentos</a>
+      <a href="clientes.html">Clientes</a>
+      <a href="profissionais.html">Profissionais</a>
+      <a href="financeiro.html">Financeiro</a>
+      <a href="campanhas.html">Campanhas</a>
+      <a href="relatorios.html">Relatórios</a>
+      <a href="config.html">Configurações</a>
+    </nav>
+  </aside>
+
+  <!-- Overlay para fechar sidebar no mobile -->
+  <div class="overlay" id="overlay" hidden></div>
+
+  <!-- Main -->
+  <main class="main">
+    <!-- Topbar responsiva -->
+    <header class="topbar">
+      <button class="icon-btn" id="btnMenu" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <h1 class="title">Dashboard</h1>
+      <div class="user">
+        <span class="hide-xs">Admin</span>
+        <button id="logout" class="ghost-btn">Sair</button>
+      </div>
+    </header>
+
+    <!-- Cards de métricas -->
+    <section class="cards">
+      <article class="card kpi">
+        <h3>Agendamentos hoje</h3>
+        <p id="ag-hoje">—</p>
+      </article>
+      <article class="card kpi">
+        <h3>Faturamento (mês)</h3>
+        <p id="fat-mes">—</p>
+      </article>
+      <article class="card kpi">
+        <h3>Clientes ativos</h3>
+        <p id="clientes">—</p>
+      </article>
+      <article class="card kpi">
+        <h3>Cancelamentos</h3>
+        <p id="cancel">—</p>
+      </article>
+    </section>
+
+    <!-- Agenda do dia (forçada a ficar como tabela também no mobile) -->
+    <section class="agenda card">
+      <div class="section-head">
+        <h2>Agenda do dia</h2>
+        <button class="ghost-btn small" id="exportCsv">Exportar CSV</button>
+      </div>
+      <!-- ⬇️ Opt-out do empilhamento mobile -->
+      <div class="table-responsive no-stack">
+        <table class="table no-stack" id="tblAgendaHome">
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>Cliente</th>
+              <th>Serviço</th>
+              <th>Profissional</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="agenda-list">
+            <!-- linhas geradas no JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="js/admin.js"></script>
+<script src="js/ui-enhancements.js"></script>
+<script src="js/ui-extras.js"></script>
+<script src="js/offcanvas.js"></script>
+</body>
+</html>

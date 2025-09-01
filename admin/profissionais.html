@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Profissionais – Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-hidden="true">
+    <div class="brand"><img src="../images/logobarba.png" alt="logo" /><h2>Admin</h2></div>
+ <nav class="menu" role="navigation">
+<a href="index.html">Dashboard</a>
+<a href="agendamentos.html">Agendamentos</a>
+<a href="clientes.html">Clientes</a>
+<a href="profissionais.html" class="active">Profissionais</a>
+<a href="financeiro.html">Financeiro</a>
+<a href="campanhas.html">Campanhas</a>
+<a href="relatorios.html">Relatórios</a>
+<a href="config.html">Configurações</a>
+</nav>
+  </aside>
+  <div class="overlay" id="overlay" hidden></div>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="btnMenu" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <h1 class="title">Profissionais</h1>
+      <div class="user"><button id="logout" class="ghost-btn">Sair</button></div>
+    </header>
+
+    <!-- Toolbar -->
+    <section class="card" style="margin:12px">
+      <div class="section-head" style="gap:8px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="q" class="ghost-btn" placeholder="Buscar por nome…" style="width:100%;max-width:300px" />
+          <select id="filterActive" class="ghost-btn">
+            <option value="">Todos</option>
+            <option value="true">Ativos</option>
+            <option value="false">Inativos</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="btnAdd" class="ghost-btn">+ Novo profissional</button>
+          <button id="btnExport" class="ghost-btn">Exportar CSV</button>
+        </div>
+      </div>
+
+      <!-- Tabela -->
+      <div class="table-responsive no-stack" style="margin-top:10px">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nome</th><th>Especialidades</th><th>Comissão (%)</th><th>Status</th><th>Agenda hoje</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="grid"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Agenda individual -->
+    <section class="card" style="margin:12px">
+      <div class="section-head">
+        <h2 id="agTitle">Agenda de: —</h2>
+        <div style="display:flex;gap:8px">
+          <input id="agDate" class="ghost-btn" type="date" />
+          <button id="btnReloadAgenda" class="ghost-btn">Atualizar</button>
+        </div>
+      </div>
+      <div class="table-responsive no-stack" style="margin-top:10px">
+        <table class="table">
+          <thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Status</th></tr></thead>
+          <tbody id="agList"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Drawer de Edição -->
+<div id="drawer" class="overlay" hidden>
+  <aside class="card" style="position:fixed;right:0;top:0;bottom:0;width:min(520px,100%);overflow:auto;border-left:1px solid var(--border);border-radius:0">
+    <div class="section-head" style="position:sticky;top:0;background:#fff;padding:12px;border-bottom:1px solid var(--border)">
+      <h2 id="dTitle" style="margin:0">Editar profissional</h2>
+      <button id="dClose" class="ghost-btn">Fechar</button>
+    </div>
+    <form id="profForm" style="padding:12px;display:grid;gap:10px">
+      <div style="display:grid;gap:6px">
+        <label>Nome</label>
+        <input id="fNome" class="ghost-btn" placeholder="Ex.: Ana Santos" required />
+      </div>
+      <div style="display:grid;gap:6px">
+        <label>Especialidades (separe por vírgula)</label>
+        <input id="fSpecs" class="ghost-btn" placeholder="Corte, Barba…" />
+      </div>
+      <div style="display:grid;gap:6px">
+        <label>Comissão (%)</label>
+        <input id="fRate" class="ghost-btn" type="number" step="1" min="0" max="100" value="40" required />
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="fActive" type="checkbox" />
+        <label for="fActive">Ativo</label>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="ghost-btn" type="submit">Salvar</button>
+        <button class="ghost-btn" type="button" id="btnDelete">Excluir</button>
+      </div>
+    </form>
+  </aside>
+</div>
+
+<script src="js/profissionais.js"></script>
+<script src="js/ui-enhancements.js"></script>
+<script src="js/ui-extras.js"></script>
+<script src="js/offcanvas.js"></script>
+
+
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Relatórios – Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .charts-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr;
+      padding: 12px;
+    }
+    @media (min-width: 720px) {
+      .charts-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .chart-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px 12px;
+    }
+    .chart-card h3 { margin: 0 0 8px; }
+    .chart-box {
+      position: relative;
+      height: 320px;
+      overflow: hidden;
+    }
+    .chart-box canvas {
+      position: absolute;
+      inset: 0;
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 12px;
+    }
+    .seg {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .seg button {
+      border: 0;
+      padding: 8px 12px;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .seg button.active {
+      background: var(--primary);
+      color: #fff;
+    }
+    .toolbar .muted { color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar" aria-hidden="true">
+      <div class="brand"><img src="../images/logobarba.png" alt="logo" /><h2>Admin</h2></div>
+    <nav class="menu" role="navigation">
+<a href="index.html">Dashboard</a>
+<a href="#" class="active">Agendamentos</a>
+<a href="clientes.html">Clientes</a>
+<a href="profissionais.html">Profissionais</a>
+<a href="financeiro.html">Financeiro</a>
+<a href="campanhas.html">Campanhas</a>
+<a href="relatorios.html">Relatórios</a>
+<a href="config.html">Configurações</a>
+</nav>
+    </aside>
+    <div class="overlay" id="overlay" hidden></div>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn" id="btnMenu" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+        <h1 class="title">Relatórios</h1>
+        <div class="user"><button id="logout" class="ghost-btn">Sair</button></div>
+      </header>
+
+      <!-- Toolbar de período -->
+      <div class="toolbar">
+        <span class="muted">Período:</span>
+        <div class="seg" role="tablist" aria-label="Período">
+          <button id="p7"  data-n="7"  class="active"  aria-selected="true">7d</button>
+          <button id="p14" data-n="14"                 aria-selected="false">14d</button>
+          <button id="p30" data-n="30"                 aria-selected="false">30d</button>
+        </div>
+        <span class="muted" id="rangeLabel"></span>
+      </div>
+
+      <section class="charts-grid">
+        <article class="chart-card" style="grid-column:1/-1">
+          <h3>Faturamento por dia</h3>
+          <div class="chart-box"><canvas id="chartFat"></canvas></div>
+        </article>
+
+        <article class="chart-card">
+          <h3>Serviços mais vendidos</h3>
+          <div class="chart-box"><canvas id="chartServ"></canvas></div>
+        </article>
+
+        <article class="chart-card">
+          <h3>Métodos de pagamento</h3>
+          <div class="chart-box"><canvas id="chartPay"></canvas></div>
+        </article>
+
+        <article class="chart-card" style="grid-column:1/-1">
+          <h3>Produtividade por profissional</h3>
+          <div class="chart-box"><canvas id="chartProd"></canvas></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/relatorios.js"></script>
+  <script src="js/ui-enhancements.js"></script>
+  <script src="js/ui-extras.js"></script>
+  <script src="js/offcanvas.js"></script>
+
+
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Profissional – Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ajustes leves específicos desta página */
+    .tabs { display:flex; gap:8px; flex-wrap:wrap; padding:0 12px 8px; }
+    .tab { border:1px solid var(--border); background:#fff; border-radius:999px; padding:8px 12px; font-weight:700; cursor:pointer }
+    .tab.active { background:var(--primary); color:#fff; border-color:var(--primary) }
+    .profile-head { display:flex; gap:12px; align-items:center; }
+    .avatar { width:64px; height:64px; border-radius:999px; object-fit:cover; border:2px solid var(--border) }
+    .kv { display:grid; gap:6px; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); }
+    .kv .item { border:1px solid var(--border); border-radius:12px; background:#fff; padding:10px 12px }
+    .kv .item small { color:var(--muted) }
+    .actions-row { display:flex; gap:8px; flex-wrap:wrap }
+    .chart-box { position:relative; height:300px }
+    .grid-2 { display:grid; grid-template-columns: 1fr; gap:10px; }
+    @media (min-width: 720px){ .grid-2 { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-hidden="true">
+    <div class="brand"><img src="../images/logobarba.png" alt="logo" /><h2>Admin</h2></div>
+<nav class="menu" role="navigation">
+<a href="index.html">Dashboard</a>
+<a href="agendamentos.html">Agendamentos</a>
+<a href="clientes.html">Clientes</a>
+<a href="profissionais.html"  class="active">Profissionais</a>
+<a href="financeiro.html">Financeiro</a>
+<a href="campanhas.html">Campanhas</a>
+<a href="relatorios.html">Relatórios</a>
+<a href="config.html">Configurações</a>
+</nav>
+  </aside>
+  <div class="overlay" id="overlay" hidden></div>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="btnMenu" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <h1 class="title" id="title">Profissional</h1>
+      <div class="user"><button id="logout" class="ghost-btn">Sair</button></div>
+    </header>
+
+    <!-- Header do perfil -->
+    <section class="card" style="margin:12px">
+      <div class="profile-head">
+        <img id="avatar" class="avatar" src="https://i.pravatar.cc/160?img=47" alt="avatar">
+        <div>
+          <h2 id="name" style="margin:0 0 6px">—</h2>
+          <div id="specs" class="muted">—</div>
+        </div>
+      </div>
+      <div class="kv" style="margin-top:12px">
+        <div class="item"><small>Comissão</small><div><strong id="rate">—%</strong></div></div>
+        <div class="item"><small>Status</small><div><strong id="status">—</strong></div></div>
+        <div class="item"><small>Atendimentos (30d)</small><div><strong id="kAtend">—</strong></div></div>
+        <div class="item"><small>Ticket médio</small><div><strong id="kTicket">—</strong></div></div>
+      </div>
+      <div class="actions-row" style="margin-top:12px">
+        <button id="btnEdit" class="ghost-btn">Editar</button>
+        <button id="btnMessage" class="ghost-btn">Enviar mensagem</button>
+      </div>
+    </section>
+
+    <!-- Abas -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="perfil">Perfil</button>
+      <button class="tab" data-tab="agenda">Agenda</button>
+      <button class="tab" data-tab="comissoes">Comissões</button>
+    </nav>
+
+    <!-- Conteúdo: Perfil -->
+    <section id="tab-perfil" class="card" style="margin:12px">
+      <h3 style="margin-top:0">Dados do profissional</h3>
+
+      <div class="grid-2">
+        <div>
+          <label>Nome
+            <input id="fNome" class="ghost-btn" placeholder="Nome completo" />
+          </label>
+        </div>
+        <div>
+          <label>Especialidades (separe por vírgula)
+            <input id="fSpecs" class="ghost-btn" placeholder="Corte, Barba…" />
+          </label>
+        </div>
+
+        <div>
+          <label>Avatar (URL)
+            <input id="fAvatar" class="ghost-btn" placeholder="https://.../foto.jpg" />
+            <small class="muted">Use uma URL pública (ex.: CDN, pravatar.cc, storage próprio).</small>
+          </label>
+        </div>
+        <div>
+          <label>Avatar (arquivo)
+            <input id="fAvatarUpload" class="ghost-btn" type="file" accept="image/*" />
+            <small class="muted">PNG/JPG até ~2MB. O arquivo é otimizado automaticamente.</small>
+          </label>
+          <button id="btnAvatarClear" class="ghost-btn" type="button">Remover avatar</button>
+        </div>
+
+        <div>
+          <label>Comissão (%)
+            <input id="fRate" type="number" class="ghost-btn" min="0" max="100" step="1" />
+          </label>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+          <input id="fActive" type="checkbox" /> <label for="fActive">Ativo</label>
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
+
+      <h4>Contatos & Endereço</h4>
+      <div class="grid-2">
+        <div>
+          <label>Telefone (WhatsApp)
+            <input id="fTelefone" class="ghost-btn" placeholder="(11) 90000-0000" />
+          </label>
+        </div>
+        <div>
+          <label>E-mail
+            <input id="fEmail" class="ghost-btn" type="email" placeholder="exemplo@email.com" />
+          </label>
+        </div>
+        <div style="grid-column:1/-1">
+          <label>Endereço
+            <input id="fEndereco" class="ghost-btn" placeholder="Rua Exemplo, 123 - Bairro - Cidade - UF" />
+          </label>
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
+
+      <h4>Documentos</h4>
+      <div class="grid-2">
+        <div>
+          <label>CPF
+            <input id="fCpf" class="ghost-btn" placeholder="000.000.000-00" />
+          </label>
+        </div>
+        <div>
+          <label>RG
+            <input id="fRg" class="ghost-btn" placeholder="00.000.000-0" />
+          </label>
+        </div>
+        <div>
+          <label>Data de nascimento
+            <input id="fNasc" class="ghost-btn" type="date" />
+          </label>
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
+
+      <h4>Vínculo</h4>
+      <div class="grid-2">
+        <div>
+          <label>Data de contratação
+            <input id="fContratacao" class="ghost-btn" type="date" />
+          </label>
+        </div>
+        <div>
+          <label>Tipo de vínculo
+            <select id="fVinculo" class="ghost-btn">
+              <option value="">Selecione</option>
+              <option value="clt">CLT</option>
+              <option value="autonomo">Autônomo</option>
+              <option value="comissao">Comissão</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label>Anotações
+          <textarea id="fObs" class="ghost-btn" rows="3" placeholder="Observações internas"></textarea>
+        </label>
+      </div>
+
+      <div class="actions-row" style="margin-top:12px">
+        <button id="btnSave" class="ghost-btn">Salvar alterações</button>
+        <button id="btnDelete" class="ghost-btn">Excluir profissional</button>
+      </div>
+    </section>
+
+    <!-- Conteúdo: Agenda -->
+    <section id="tab-agenda" class="card" style="margin:12px; display:none">
+      <div class="section-head">
+        <h3 style="margin:0">Agenda</h3>
+        <div style="display:flex;gap:8px">
+          <input id="agDate" class="ghost-btn" type="date" />
+          <button id="btnReloadAgenda" class="ghost-btn">Atualizar</button>
+        </div>
+      </div>
+      <div class="table-responsive" style="margin-top:10px">
+        <table class="table">
+          <thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="agList"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Conteúdo: Comissões -->
+    <section id="tab-comissoes" class="card" style="margin:12px; display:none">
+      <h3 style="margin:0 0 10px">Comissões por mês</h3>
+      <div class="chart-box"><canvas id="chartCom"></canvas></div>
+      <div class="kv" style="margin-top:12px">
+        <div class="item"><small>Média mensal</small><div><strong id="kAvg">—</strong></div></div>
+        <div class="item"><small>Maior mês</small><div><strong id="kMax">—</strong></div></div>
+        <div class="item"><small>Menor mês</small><div><strong id="kMin">—</strong></div></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="js/profissional.js"></script>
+<script src="js/masks.js"></script>
+<!-- <script src="js/api.js"></script> -->
+
+<script>
+  // aplica máscaras após hidratar a página
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.InputMasks) InputMasks.applyDefault();
+  });
+</script>
+<script src="js/ui-enhancements.js"></script>
+<script src="js/ui-extras.js"></script>
+<script src="js/offcanvas.js"></script>
+
+
+
+</body>
+</html>

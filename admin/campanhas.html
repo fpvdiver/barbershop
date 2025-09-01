@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Campanhas – Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css" />
+  <style>
+    :root{
+      --gap: 12px;
+    }
+
+    /* ===== Layout principal ===== */
+    .toolbar { 
+      display:flex; gap:8px; flex-wrap:wrap; padding:12px; align-items:center;
+    }
+    .toolbar .spacer { flex:1 }
+
+    .cards { 
+      display:grid; gap:var(--gap); grid-template-columns:1fr; padding:12px;
+    }
+    @media (min-width: 960px) { 
+      .cards { grid-template-columns: 2fr 1fr; }
+    }
+
+    /* ===== Segment control ===== */
+    .seg { 
+      display:inline-flex; border:1px solid var(--border); border-radius:999px; 
+      overflow:hidden; background:#fff;
+    }
+    .seg button { 
+      border:0; padding:8px 12px; background:transparent; cursor:pointer; font-weight:700; 
+      font-size: 14px;
+    }
+    .seg button.active { background:var(--primary); color:#fff }
+
+    /* ===== Tabela responsiva ===== */
+    .table-responsive { overflow:auto; }
+    .table { width:100%; border-collapse: collapse; }
+    .table th, .table td { padding:10px; border-top:1px solid var(--border); vertical-align:top; }
+    .table thead th { position:sticky; top:0; background:#fff; z-index:1; }
+
+    /* Mobile: cada linha vira um "cartão" */
+    @media (max-width: 720px) {
+      .table thead { display:none; }
+      .table tr { display:block; border:1px solid var(--border); border-radius:12px; margin-bottom:10px; background:#fff; }
+      .table td { 
+        display:flex; justify-content:space-between; gap:8px; border:none; border-top:1px dashed var(--border);
+      }
+      .table td:first-child { border-top:none; }
+      .table td::before {
+        content: attr(data-label);
+        font-weight:700;
+        color: var(--muted);
+      }
+    }
+
+    .table td .badge { margin-left:6px }
+
+    /* ===== Drawer (criar/editar campanha) ===== */
+    .overlay2 { position:fixed; inset:0; background:rgba(0,0,0,.25); display:none; z-index:40 }
+    .overlay2.show { display:block }
+
+    .drawer { 
+      position:fixed; top:0; right:-100%; width:100%; height:100%;
+      background:#fff; box-shadow:-8px 0 24px rgba(0,0,0,.08); transition:.25s ease; 
+      z-index:50; display:flex; flex-direction:column
+    }
+    .drawer.open { right:0 }
+    @media (min-width: 860px){
+      .drawer { width: 90%; max-width: 720px; }
+    }
+    .drawer .head { 
+      display:flex; align-items:center; justify-content:space-between; padding:12px; 
+      border-bottom:1px solid var(--border); position:sticky; top:0; background:#fff; z-index:1 
+    }
+    .drawer .body { padding:12px; overflow:auto; display:grid; gap:12px; }
+    .drawer .foot { 
+      padding:12px; border-top:1px solid var(--border); display:flex; gap:8px; flex-wrap:wrap; 
+      position:sticky; bottom:0; background:#fff 
+    }
+
+    /* ===== Form grid ===== */
+    .row { display:grid; gap:10px; grid-template-columns:1fr; }
+    .row-2 { grid-template-columns:1fr; }
+    @media (min-width: 720px) { 
+      .row-2 { grid-template-columns:1fr 1fr }
+    }
+
+    /* ===== Whats preview / dicas ===== */
+    .whats-preview { 
+      border:1px solid var(--border); border-radius:12px; padding:12px; 
+      background:#e9f7ef; font-size:14px; line-height:1.4; word-break: break-word;
+    }
+    .counter, .muted { color:var(--muted); font-size: 12px; }
+    .pill { font-size:12px; padding:2px 8px; border:1px solid var(--border); border-radius:999px; background:#fff; }
+
+    /* ===== Botões e ações ===== */
+    .actions-row, .drawer .foot, .toolbar { flex-wrap: wrap; }
+    .ghost-btn, .btn { inline-size: auto; }
+    @media (max-width: 480px){
+      .ghost-btn, .btn { width: 100%; }
+      .seg { width: 100%; justify-content: center; }
+    }
+
+    /* ===== Acessibilidade mínima ===== */
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar" aria-hidden="true">
+    <div class="brand"><img src="../images/logobarba.png" alt="logo" /><h2>Admin</h2></div>
+    <nav class="menu" role="navigation">
+      <a href="index.html">Dashboard</a>
+      <a href="agendamentos.html">Agendamentos</a>
+      <a href="clientes.html">Clientes</a>
+      <a href="profissionais.html">Profissionais</a>
+      <a href="financeiro.html">Financeiro</a>
+      <a href="relatorios.html">Relatórios</a>
+      <a href="campanhas.html" class="active">Campanhas</a>
+      <a href="config.html">Configurações</a>
+    </nav>
+  </aside>
+  <div class="overlay" id="overlay" hidden></div>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="btnMenu" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <h1 class="title">Campanhas</h1>
+      <div class="user"><button id="logout" class="ghost-btn">Sair</button></div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="seg" role="tablist" aria-label="Visão">
+        <button id="tab-minhas" class="active" data-tab="minhas" aria-selected="true">Minhas campanhas</button>
+        <button id="tab-templates" data-tab="templates" aria-selected="false">Templates prontos</button>
+      </div>
+      <div class="spacer"></div>
+      <button id="btnNova" class="ghost-btn">+ Nova campanha</button>
+    </div>
+
+    <!-- Painéis -->
+    <section class="cards">
+      <!-- Lista (Minhas campanhas) -->
+      <article class="card" id="panel-minhas">
+        <div class="section-head">
+          <h3 style="margin:0">Minhas campanhas</h3>
+          <div class="muted">Gerencie rascunhos, agendadas e enviadas</div>
+        </div>
+        <div class="table-responsive" style="margin-top:10px">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Título</th><th>Status</th><th>Segmento</th><th>Programação</th><th>Métrica</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="gridCampanhas"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- Templates -->
+      <aside class="card" id="panel-templates" style="display:none">
+        <div class="section-head">
+          <h3 style="margin:0">Templates prontos</h3>
+          <div class="muted">Baseados no comportamento de barbearias</div>
+        </div>
+        <div id="templatesList" style="display:grid; gap:10px; margin-top:10px"></div>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<!-- Drawer criar/editar -->
+<div class="overlay2" id="overlay2"></div>
+<aside class="drawer" id="drawer" aria-modal="true" role="dialog" aria-labelledby="drawerTitle">
+  <div class="head">
+    <strong id="drawerTitle">Nova campanha</strong>
+    <button id="btnClose" class="ghost-btn">Fechar</button>
+  </div>
+  <div class="body">
+    <div class="row row-2">
+      <label>Título
+        <input id="fTitle" class="ghost-btn" placeholder="Ex.: Renovação de corte – Setembro" />
+      </label>
+      <label>Template base
+        <select id="fTemplate" class="ghost-btn">
+          <option value="">— Selecionar —</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="row">
+      <label>Mensagem (WhatsApp)
+        <textarea id="fMessage" class="ghost-btn" rows="6" placeholder="Escreva sua mensagem. Use {{nome}}, {{primeiro_nome}} e {{link}} para personalizar."></textarea>
+        <div class="counter"><span id="countChars">0</span> caracteres • Dica: mantenha &lt; 1000</div>
+      </label>
+      <div class="whats-preview" id="preview" aria-live="polite"></div>
+    </div>
+
+    <div class="row row-2">
+      <fieldset>
+        <legend style="font-weight:700;margin-bottom:6px">Segmento</legend>
+        <label><input type="radio" name="seg" value="todos" checked /> Todos os clientes</label><br>
+        <label><input type="radio" name="seg" value="servico" /> Por serviço</label>
+        <select id="fServ" class="ghost-btn" style="margin-top:6px" disabled>
+          <option value="">— Serviço —</option>
+          <option value="Corte">Corte</option>
+          <option value="Degradê">Degradê</option>
+          <option value="Barba">Barba</option>
+          <option value="Hidratação">Hidratação</option>
+          <option value="Colorimetria">Colorimetria</option>
+        </select>
+        <div class="muted" style="margin-top:6px">Ex.: “Renove seu degradê”</div>
+      </fieldset>
+
+      <fieldset>
+        <legend style="font-weight:700;margin-bottom:6px">Última visita</legend>
+        <label><input type="checkbox" id="fFiltroDias" /> Não vem há</label>
+        <select id="fDias" class="ghost-btn" disabled>
+          <option value="15">15 dias</option>
+          <option value="30" selected>30 dias</option>
+          <option value="45">45 dias</option>
+          <option value="60">60 dias</option>
+        </select>
+        <div class="muted" style="margin-top:6px">Combina com serviço para campanhas de renovação</div>
+      </fieldset>
+    </div>
+
+    <div class="row row-2">
+      <label>Link de agendamento (opcional)
+        <input id="fLink" class="ghost-btn" placeholder="https://seusite.com/agendar" />
+      </label>
+      <label>Teste (WhatsApp)
+        <input id="fTestPhone" class="ghost-btn" placeholder="55DDDNUMERO (ex: 5511999990000)" />
+      </label>
+    </div>
+
+    <div class="row row-2">
+      <fieldset>
+        <legend style="font-weight:700;margin-bottom:6px">Envio</legend>
+        <label><input type="radio" name="when" value="agora" checked /> Disparar agora</label><br>
+        <label><input type="radio" name="when" value="agendar" /> Agendar</label>
+        <div style="display:flex; gap:8px; margin-top:6px; flex-wrap: wrap;">
+          <input id="fDate" type="date" class="ghost-btn" disabled />
+          <input id="fTime" type="time" class="ghost-btn" disabled />
+        </div>
+      </fieldset>
+
+      <div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+          <span class="pill" id="audCount">0 destinatários</span>
+          <span class="muted">Variáveis: <code>{{nome}}</code> <code>{{primeiro_nome}}</code> <code>{{link}}</code></span>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap">
+          <button id="btnTest" class="ghost-btn">Enviar teste</button>
+          <button id="btnSave" class="ghost-btn">Salvar rascunho</button>
+          <button id="btnSchedule" class="ghost-btn">Programar</button>
+          <button id="btnSendNow" class="btn btn-primary">Disparar agora</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <button id="btnDelete" class="ghost-btn">Excluir</button>
+  </div>
+</aside>
+
+<script src="js/campanhas.js"></script>
+<script src="js/api.js"></script> <!-- opcional: se usar o helper -->
+<script src="js/ui-enhancements.js"></script>
+<script src="js/ui-extras.js"></script>
+<script src="js/offcanvas.js"></script>
+
+
+</body>
+</html>

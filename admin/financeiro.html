@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Financeiro – Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar" id="sidebar" aria-hidden="true">
+<div class="brand"><img src="../images/logobarba.png" alt="logo" /><h2>Admin</h2></div>
+<nav class="menu" role="navigation">
+<a href="index.html">Dashboard</a>
+<a href="agendamentos.html">Agendamentos</a>
+<a href="clientes.html">Clientes</a>
+<a href="profissionais.html">Profissionais</a>
+<a href="financeiro.html"  class="active">Financeiro</a>
+<a href="campanhas.html">Campanhas</a>
+<a href="relatorios.html">Relatórios</a>
+<a href="config.html">Configurações</a>
+</nav>
+</aside>
+<div class="overlay" id="overlay" hidden></div>
+
+
+<main class="main">
+<header class="topbar">
+<button class="icon-btn" id="btnMenu" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+<h1 class="title">Financeiro</h1>
+<div class="user"><button id="logout" class="ghost-btn">Sair</button></div>
+</header>
+
+
+<section class="cards">
+<article class="card kpi"><h3>Receitas (mês)</h3><p id="kpiReceita">—</p></article>
+<article class="card kpi"><h3>Despesas (mês)</h3><p id="kpiDespesa">—</p></article>
+<article class="card kpi"><h3>Lucro (mês)</h3><p id="kpiLucro">—</p></article>
+<article class="card kpi"><h3>Comissões</h3><p id="kpiComissao">—</p></article>
+</section>
+
+
+<section class="card" style="margin:12px">
+<div class="section-head">
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<input id="dateFrom" class="ghost-btn" type="date"/>
+<input id="dateTo" class="ghost-btn" type="date"/>
+<select id="payMethod" class="ghost-btn">
+<option value="">Todos</option><option>PIX</option><option>Cartão</option><option>Dinheiro</option>
+</select>
+</div>
+<div style="display:flex;gap:8px">
+<button id="btnAddTx" class="ghost-btn">+ Lançamento</button>
+<button id="btnExportTx" class="ghost-btn">Exportar CSV</button>
+</div>
+</div>
+<div class="table-responsive" style="margin-top:10px">
+<table class="table">
+<thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Método</th><th>Valor</th></tr></thead>
+<tbody id="txList"></tbody>
+</table>
+</div>
+</section>
+</main>
+</div>
+<script src="js/financeiro.js"></script>
+<script src="js/ui-enhancements.js"></script>
+<script src="js/ui-extras.js"></script>
+<script src="js/offcanvas.js"></script>
+
+
+</body>
+</html>

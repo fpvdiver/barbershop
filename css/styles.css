@@ -1,0 +1,121 @@
+:root{
+--bg:#ffffff; --text:#111827; --muted:#6b7280; --card:#ffffff; --border:#e5e7eb; --shadow:0 12px 30px rgba(0,0,0,.06);
+--primary:#111111; --radius:22px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+.page{max-width:420px;margin:0 auto;padding:20px}
+
+
+/* Banner superior cinza listrado */
+.hero-banner{height:140px;border-radius:16px;background:repeating-linear-gradient( to bottom, #e5e7eb 0 24px, #eeeeee 24px 48px ); box-shadow:var(--shadow)}
+
+
+/* Logo circular */
+.brand{display:grid;place-items:center;margin:18px 0 6px}
+.brand-badge{width:86px;height:86px;border-radius:999px;background:#0b0b0b;color:#fff;display:grid;place-items:center;font-weight:800;letter-spacing:.5px;text-transform:lowercase;box-shadow:0 10px 20px rgba(0,0,0,.12)}
+.brand-logo{width:86px;height:86px;border-radius:999px;object-fit:cover;box-shadow:0 10px 20px rgba(0,0,0,.12)}
+
+
+/* Título e selo online */
+.hero-copy{text-align:center;margin-top:6px}
+.title{font-size:28px;font-weight:800;line-height:1.15;margin:0}
+.sticker{display:inline-block;margin-left:8px;padding:4px 10px;background:#dcffc3;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08);transform:rotate(-2deg);font-weight:800}
+.subtitle{margin:10px 0 0;color:var(--muted);font-size:14px}
+
+
+/* Ações */
+.actions{margin-top:18px;display:grid;gap:12px}
+.btn{width:100%;padding:14px 16px;border-radius:999px;border:1px solid var(--border);font-weight:700;letter-spacing:.3px;text-align:center;cursor:pointer}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-ghost{background:#fff;color:var(--text)}
+
+
+/* Dock inferior */
+.dock{margin:18px auto 8px;display:flex;gap:24px;justify-content:center;align-items:center}
+.dock-item{width:40px;height:40px;border-radius:999px;border:1px solid var(--border);display:grid;place-items:center;color:#111}
+.dock-item:active{transform:translateY(1px)}
+.site-domain{text-align:center;color:#9ca3af;font-size:12px}
+
+/* ==== Marketing extras ==== */
+.carousel{position:relative;margin:18px 0;overflow:hidden;border-radius:16px;border:1px solid var(--border,#e5e7eb)}
+.carousel-track{display:flex;transition:transform .4s ease}
+.slide{min-width:100%;max-height:240px;display:grid;place-items:center;background:#f3f4f6}
+.slide img,.slide video{width:100%;height:100%;object-fit:cover}
+.dot{width:8px;height:8px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;margin:8px 6px 0 6px}
+.dot.is-active{background:#111}
+
+
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.badge{padding:6px 10px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;font-weight:700;font-size:12px}
+
+
+.reviews{margin:8px 0}
+.reviews .h2{font-size:18px;margin:0 0 8px;font-weight:800}
+.reviews-list{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.review{padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff}
+
+
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.gallery .g-item{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden}
+.gallery img{display:block;width:100%;height:100%;object-fit:cover}
+
+
+.info{display:grid;gap:6px;margin:12px 0}
+.info-row{display:flex;justify-content:space-between;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px;background:#fff}
+.info-row span{color:#6b7280}
+
+
+.faq{display:grid;gap:8px;margin:12px 0}
+.qa{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:10px 12px}
+.qa>summary{cursor:pointer;font-weight:700}
+.qa>p{margin:8px 0 0;color:#4b5563}
+
+
+/* WhatsApp FAB */
+.wa-fab{position:fixed;right:16px;bottom:84px;width:56px;height:56px;border-radius:999px;display:grid;place-items:center;background:#25D366;color:#fff;font-weight:900;border:0;box-shadow:0 6px 16px rgba(0,0,0,.15);z-index:30}
+
+/* === Layout “mock” === */
+.hero-carousel,
+.promo-carousel{
+  overflow:hidden;
+  border:1px solid var(--border, #e5e7eb);
+  border-radius:24px;
+  background:#f3f4f6;
+  position:relative;
+  margin:12px 0 22px;
+  box-shadow:0 8px 24px rgba(0,0,0,.06);
+  min-height:160px;
+}
+.hero-carousel{ min-height:170px; }
+
+.carousel-track{ display:flex; transition:transform .35s ease; }
+.slide{ min-width:100%; display:grid; place-items:center; }
+.slide img, .slide video{ width:100%; height:100%; object-fit:cover; }
+
+.dots{
+  position:absolute; left:12px; bottom:10px;
+  display:flex; gap:8px;
+}
+.dots button{
+  width:22px; height:8px; border-radius:999px;
+  border:1px solid #e5e7eb; background:#fff; opacity:.85;
+}
+.dots button.is-active{ background:#111; border-color:#111; opacity:1; }
+
+.brand-over{ display:grid; place-items:center; margin-top:-36px; }
+.brand-over .brand-logo{
+  width:72px; height:72px; border-radius:999px;
+  border:6px solid #fff; box-shadow:0 10px 24px rgba(0,0,0,.12);
+  background:#fff; object-fit:cover;
+  z-index: 99;
+}
+
+.hero-centered{ text-align:center; margin-top:8px; }
+.actions-centered{ margin-top:12px; }
+.section-title{
+  font-size:18px; font-weight:800; text-align:center; margin:18px 0 10px;
+}
+.badges-centered{ display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap; }
+.badge{ padding:6px 12px; border:1px solid #e5e7eb; border-radius:999px; background:#fff; font-weight:700; font-size:12px; }
