@@ -57,7 +57,7 @@
 </div>
 
 
-<div class="table-responsive" style="margin-top:10px">
+<div class="table-responsive no-stack" style="margin-top:10px">
 <table class="table">
 <thead>
 <tr>
@@ -76,6 +76,27 @@
 <script src="js/ui-enhancements.js"></script>
 <script src="js/ui-extras.js"></script>
 <script src="js/offcanvas.js"></script>
+<script>
+  (function () {
+    try {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('overlay');
+      const btn = document.getElementById('btnMenu');
+      if (!sidebar || !overlay || !btn) return;
+
+      if (btn.__fallbackBound) return; // evita múltiplos binds
+
+      const open = () => { sidebar.classList.add('open'); overlay.hidden = false; btn.setAttribute('aria-expanded','true'); };
+      const close = () => { sidebar.classList.remove('open'); overlay.hidden = true;  btn.setAttribute('aria-expanded','false'); };
+      const toggle = () => (sidebar.classList.contains('open') ? close() : open());
+
+      btn.addEventListener('click', toggle);
+      overlay.addEventListener('click', close);
+      btn.__fallbackBound = true;
+    } catch (e) { /* nada */ }
+  })();
+</script>
+
 
 </body>
 </html>
