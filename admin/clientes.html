@@ -92,44 +92,37 @@
     </div>
 
     <!-- Drawer de perfil -->
-    <div id="drawer" class="overlay" hidden>
-      <aside
-        class="card"
-        style="
-          position: fixed;
-          right: 0;
-          top: 0;
-          bottom: 0;
-          width: min(520px, 100%);
-          overflow: auto;
-          border-left: 1px solid var(--border);
-          border-radius: 0;
-        "
-      >
-        <div
-          class="section-head"
-          style="
-            position: sticky;
-            top: 0;
-            background: #fff;
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-          "
-        >
-          <h2 id="dName" style="margin: 0">Cliente</h2>
-          <button id="dClose" class="ghost-btn">Fechar</button>
-        </div>
-        <div style="padding: 12px">
-          <p><strong>Telefone:</strong> <span id="dPhone">—</span></p>
-          <p><strong>Tags:</strong> <span id="dTags">—</span></p>
-          <h3 style="margin: 10px 0 6px">Histórico</h3>
-          <ul id="dHist" style="padding-left: 18px"></ul>
-          <div style="display: flex; gap: 8px; margin-top: 12px">
-            <button id="dMsg" class="ghost-btn">WhatsApp</button>
-            <button id="dEdit" class="ghost-btn">Editar</button>
-          </div>
-        </div>
-      </aside>
+  <div id="overlay2" class="overlay2"></div>
+<aside
+  id="drawer"
+  class="drawer"
+  aria-modal="true"
+  role="dialog"
+  aria-labelledby="dTitle"
+>
+  <div class="head">
+    <strong id="dTitle">Cliente</strong>
+    <button id="dClose" class="ghost-btn">Fechar</button>
+  </div>
+
+  <div class="body">
+    <h2 id="dName" style="margin:0">—</h2>
+    <p><strong>Telefone:</strong> <span id="dPhone">—</span></p>
+    <p><strong>Tags:</strong> <span id="dTags">—</span></p>
+
+    <h3 style="margin:10px 0 6px">Histórico</h3>
+    <ul id="dHist" style="padding-left:18px"></ul>
+
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button id="dMsg" class="ghost-btn">WhatsApp</button>
+      <button id="dEdit" class="ghost-btn">Editar</button>
+    </div>
+  </div>
+
+  <div class="foot">
+    <button class="ghost-btn" id="dDelete">Excluir</button>
+  </div>
+</aside>
     </div>
 
     <script src="js/cliente.js"></script>
@@ -141,4 +134,5 @@
   </body>
 
 </html>
+
 
