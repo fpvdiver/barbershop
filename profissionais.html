@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Selecione o Profissional</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/profissionais.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="top">
+        <h1 class="title">Escolha um profissional</h1>
+      </header>
+
+      <!-- Grid de profissionais -->
+      <section class="grid" id="profGrid"></section>
+
+      <footer class="footer">
+        <button class="btn btn-ghost" id="btn-voltar">← Voltar</button>
+        <button class="btn btn-primary" id="btn-continuar" disabled>Continuar →</button>
+      </footer>
+    </main>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const grid = document.getElementById('profGrid');
+        const btnContinuar = document.getElementById('btn-continuar');
+        const profissionais = [
+          {id:'ana', nome:'Ana', img:'https://i.pravatar.cc/160?img=47'},
+          {id:'leo', nome:'Léo', img:'https://i.pravatar.cc/160?img=12'},
+          {id:'maria', nome:'Maria', img:'https://i.pravatar.cc/160?img=32'},
+          {id:'davi', nome:'Davi', img:'https://i.pravatar.cc/160?img=15'},
+          {id:'gui', nome:'Guilherme', img:'https://i.pravatar.cc/160?img=22'},
+          {id:'andre', nome:'André', img:'https://i.pravatar.cc/160?img=36'},
+          {id:'joao', nome:'João', img:'https://i.pravatar.cc/160?img=5'},
+          {id:'paulo', nome:'Paulo', img:'https://i.pravatar.cc/160?img=8'}
+        ];
+
+        let selected = null;
+        profissionais.forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <img src="${p.img}" alt="${p.nome}" class="avatar" />
+            <div class="name">${p.nome}</div>
+          `;
+          card.addEventListener('click', () => {
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selected = p;
+            btnContinuar.disabled = false;
+            localStorage.setItem('booking_barber', p.id);
+          });
+          grid.appendChild(card);
+        });
+
+        document.getElementById('btn-voltar').onclick = () => history.back();
+        btnContinuar.onclick = () => {
+          if(selected){
+            location.href = 'login.html';
+          }
+        };
+      });
+    </script>
+  </body>
+</html>

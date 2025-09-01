@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cadastro do Cliente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --accent:#111; --radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:var(--text)}
+    .container{max-width:460px;margin:0 auto;padding:20px}
+
+    h3{margin:0 0 14px;font-size:18px;font-weight:700}
+
+    .form{display:grid;gap:14px}
+    .field{display:grid;gap:6px}
+    .field label{font-size:14px;font-weight:600;color:var(--text)}
+    .field input{padding:12px 14px;border-radius:var(--radius);border:1px solid var(--border);font-size:15px}
+    .muted{font-size:13px;color:var(--muted)}
+
+    .status{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px solid var(--border);border-radius:999px;background:#f9fafb;margin-bottom:18px}
+    .status span{font-weight:600}
+
+    .footer-actions{margin-top:24px;display:flex;justify-content:space-between;align-items:center}
+    .btn{padding:12px 16px;border-radius:999px;border:1px solid var(--border);font-weight:700;cursor:pointer}
+    .btn.primary{background:var(--accent);color:#fff}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h3>Preencha suas informações</h3>
+
+    <div class="status">
+      <span>Você já está logado</span>
+      <button class="btn" id="btnLogout">Sair</button>
+    </div>
+
+    <form id="formCadastro" class="form">
+      <div class="field">
+        <label for="nome">Seu nome</label>
+        <input type="text" id="nome" placeholder="Nome" required>
+      </div>
+      <div class="field">
+        <label for="sobrenome">Seu sobrenome</label>
+        <input type="text" id="sobrenome" placeholder="Sobrenome" required>
+      </div>
+      <div class="field">
+        <label for="telefone">Número de telefone</label>
+        <input type="tel" id="telefone" placeholder="(11) 99999-9999" required>
+      </div>
+      <p class="muted">Caso precise alterar algum dado em seu cadastro, vá até a seção "meus agendamentos".</p>
+    </form>
+
+    <div class="footer-actions">
+      <button class="btn" id="btnBack">← Voltar</button>
+      <button class="btn primary" id="btnConfirmar">Confirmar →</button>
+    </div>
+  </div>
+
+  <script>
+    const btnBack=document.getElementById('btnBack');
+    const btnConfirmar=document.getElementById('btnConfirmar');
+    const btnLogout=document.getElementById('btnLogout');
+
+    btnBack.onclick=()=>history.back();
+
+    btnConfirmar.onclick=()=>{
+      const nome=document.getElementById('nome').value.trim();
+      const sobrenome=document.getElementById('sobrenome').value.trim();
+      const telefone=document.getElementById('telefone').value.trim();
+      if(!nome||!sobrenome||!telefone){
+        alert('Preencha todos os campos!');
+        return;
+      }
+      const profile={nome,sobrenome,telefone};
+      localStorage.setItem('booking_profile',JSON.stringify(profile));
+      console.log('Perfil salvo',profile);
+      alert('Cadastro confirmado!');
+      location.href='resumo.html';
+    };
+
+    btnLogout.onclick=()=>{
+      localStorage.removeItem('bb_token');
+      alert('Sessão encerrada');
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mineiro barber – Agende seu horário</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css" />
+<meta name="description" content="Cortes modernos, barba e acabamento premium. Agende online seu horário na Mineiro barber." />
+<meta property="og:title" content="Mineiro barber – Agende seu horário" />
+<meta property="og:description" content="Cortes modernos, barba e acabamento premium. Agende online." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="images/og-cover.jpg" />
+<script type="application/ld+json">
+{
+"@context": "https://schema.org",
+"@type": "BarberShop",
+"name": "Mineiro barber",
+"image": ["https://seu-dominio/images/og-cover.jpg"],
+"url": "https://seu-dominio/",
+"telephone": "+55 11 90000-0000",
+"address": {"@type":"PostalAddress","streetAddress":"Rua Exemplo, 123","addressLocality":"São Paulo","addressRegion":"SP","postalCode":"00000-000","addressCountry":"BR"},
+"openingHoursSpecification": [{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],"opens":"09:00","closes":"20:00"}]
+}
+</script>
+</head>
+<body>
+<main class="page">
+<!-- HERO CAROUSEL -->
+<section class="carousel hero-carousel" aria-label="Vitrine">
+  <div class="carousel-track">
+    <div class="slide is-active">
+      <img src="images/corte-1.png" alt="Corte degradê">
+    </div>
+    <div class="slide"><img src="images/corte-2.png" alt="Barba alinhada"></div>
+    <div class="slide"><img src="images/corte-3.png" alt="Acabamento premium"></div>
+  </div>
+  <div class="dots"></div>
+</section>
+
+<!-- LOGO SOBREPOSTO -->
+<div class="brand brand-over">
+  <img src="images/logobarba.png" alt="Mineiro barber" class="brand-logo" />
+</div>
+
+<!-- Título + selo online -->
+<header class="hero-copy hero-centered">
+  <h1 class="title">
+    Agende seu<br />horário
+    <span class="sticker">online</span>
+  </h1>
+  <p class="subtitle">Escolha o serviço, dia e horário que deseja ser atendido</p>
+</header>
+
+<!-- Ações -->
+<div class="actions actions-centered">
+  <button id="btn-agendar" class="btn btn-primary">Agendar</button>
+  <button id="btn-area" class="btn btn-ghost" type="button">Área do Cliente</button>
+</div>
+
+
+
+<!-- Badges -->
+<section class="badges badges-centered">
+  <span class="badge">⚡ Atendimento ágil</span>
+  <span class="badge">🎯 Profissionais experts</span>
+</section>
+
+<!-- Dock inferior (mantido) -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<nav class="dock" aria-label="atalhos">
+  <a href="#" class="dock-item" aria-label="WhatsApp"><i data-lucide="message-circle"></i></a>
+  <a href="#" class="dock-item" aria-label="Telefone"><i data-lucide="phone"></i></a>
+  <a href="#" class="dock-item" aria-label="Localização"><i data-lucide="map-pin"></i></a>
+    <a href="admin/index.html" class="dock-item" aria-label="Localização"><i data-lucide="user-star"></i></a>
+</nav>
+<script>
+  lucide.createIcons();
+</script>
+
+<footer class="site-domain">Lahntech.com</footer>
+  <script src="js/app.js"></script>
+  <script src="js/index-marketing.js"></script>
+</html>

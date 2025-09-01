@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Entrar – Mineiro BarberShop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/login.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="top">
+      <h1 class="title">Entrar</h1>
+      <p class="subtitle">Use seu e-mail para acessar a área do cliente.</p>
+    </header>
+
+    <section class="card">
+      <form id="formLogin" class="form">
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input id="email" type="email" placeholder="voce@email.com" required />
+        </div>
+
+        <div class="field">
+          <label for="password">Senha</label>
+          <input id="password" type="password" placeholder="••••••••" required />
+        </div>
+
+        <button class="btn btn-primary" type="submit">Entrar</button>
+        <button class="btn" type="button" id="goSignUp">Criar conta</button>
+      </form>
+    </section>
+
+    <footer class="footer">
+      <button class="btn" id="btnVoltar">← Voltar</button>
+    </footer>
+  </main>
+
+  <script src="js/login.js"></script>
+</body>
+</html>

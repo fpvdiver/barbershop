@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pagamento PIX (30%)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/pagamento.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="top">
+      <h1 class="title">Pagamento de pré-agendamento (30%)</h1>
+    </header>
+
+    <section class="card">
+      <div class="kv"><span>Total serviços</span><strong id="sumTotal">—</strong></div>
+      <div class="kv"><span>Sinal (30%)</span><strong id="sumSinal">—</strong></div>
+      <div class="divider"></div>
+
+      <div class="qr-wrap">
+        <img id="qr" alt="QR Code PIX" />
+        <div class="copy">
+          <label>PIX copia e cola</label>
+          <textarea id="brcode" readonly></textarea>
+          <button id="btnCopy" class="btn">Copiar código</button>
+        </div>
+        <div class="muted small" id="expires">Expira em —:—</div>
+      </div>
+
+      <div class="hint muted">Após o pagamento, confirmaremos automaticamente e você receberá uma mensagem no WhatsApp.</div>
+    </section>
+
+    <footer class="footer">
+      <button class="btn" id="btnVoltar">← Voltar</button>
+      <button class="btn btn-primary" id="btnJaPaguei">Já paguei</button>
+    </footer>
+  </main>
+
+  <script src="js/pagamento.js"></script>
+</body>
+</html>

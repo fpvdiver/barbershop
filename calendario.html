@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Selecione a Data e Hora</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/calendario.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="top">
+        <h1 class="title">Selecione a Data e Hora</h1>
+        <button class="close" id="btn-fechar" aria-label="Fechar">×</button>
+      </header>
+
+      <!-- Calendário -->
+      <section class="calendar card">
+        <div class="cal-grid" id="calGrid"></div>
+      </section>
+
+      <!-- Slots -->
+      <section class="slots-wrap">
+        <h2 class="subtitle">
+          Escolha o horário para <span id="label-dia">—</span>
+        </h2>
+        <div class="slots" id="slots"></div>
+      </section>
+
+      <!-- Footer -->
+      <div class="footer">
+        <button class="btn btn-ghost" id="btn-voltar">← Voltar</button>
+      </div>
+
+      <footer class="site-domain">lahntech.com</footer>
+    </main>
+
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+const slots = document.getElementById('slots');
+slots.addEventListener('click', (e) => {
+if(e.target.classList.contains('slot')){
+const hora = e.target.textContent;
+const dia = document.getElementById('label-dia').textContent;
+
+
+// salva a escolha
+localStorage.setItem('booking_datetime', JSON.stringify({ date: dia, time: hora }));
+
+
+if(confirm(`Confirmar agendamento em ${dia} às ${hora}?`)){
+location.href = 'profissionais.html';
+}
+}
+});
+
+
+document.getElementById('btn-voltar').onclick = () => history.back();
+document.getElementById('btn-fechar').onclick = () => history.back();
+});
+</script>
+
+    <script src="js/calendario.js"></script>
+  </body>
+</html>
