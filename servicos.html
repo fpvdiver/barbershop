@@ -59,12 +59,48 @@
       <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
     </section>
 
-    <div class="footer">
-      <button id="btnContinuar" class="btn-primary" disabled>Continuar</button>
-    </div>
-  </main>
+  <!-- injeta a URL do webhook para o JS ler -->
+<meta name="barber-services-endpoint" content="https://primary-odonto.up.railway.app/webhook/barber/procedures">
+
+<section class="card" style="margin:12px">
+  <div class="section-head" style="gap:8px;flex-wrap:wrap">
+    <input id="q" class="ghost-btn" placeholder="Buscar serviço..." style="flex:1;min-width:220px">
+    <select id="order" class="ghost-btn">
+      <option value="duration_min.asc">Duração</option>
+      <option value="base_price_cents.asc">Preço</option>
+      <option value="name.asc">Nome</option>
+    </select>
+  </div>
+
+  <!-- estado de erro -->
+  <div id="srv-error" class="card" hidden style="margin-top:8px">
+    <strong>Erro ao carregar serviços</strong>
+    <div class="muted srv-msg" style="margin:6px 0">Tente novamente.</div>
+    <button id="btn-retry" class="ghost-btn">Tentar novamente</button>
+  </div>
+
+  <!-- skeleton enquanto carrega -->
+  <div id="srv-skeleton" class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px">
+    <div class="skeleton" style="height:72px;border-radius:12px"></div>
+    <div class="skeleton" style="height:72px;border-radius:12px"></div>
+    <div class="skeleton" style="height:72px;border-radius:12px"></div>
+    <div class="skeleton" style="height:72px;border-radius:12px"></div>
+  </div>
+
+  <!-- lista renderizada via JS -->
+  <div id="servicos-list" class="list" style="display:grid;gap:8px;margin-top:10px"></div>
+</section>
+
+<footer class="footer" style="padding:12px">
+  <button id="btn-continua" class="btn btn-primary" style="width:100%">Continuar</button>
+</footer>
+
+<!-- seu JS -->
+<script src="js/servicos.api.js" defer></script>
+
 
   <script src="js/servicos.api.js"></script>
 </body>
 </html>
+
 
