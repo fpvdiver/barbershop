@@ -1,67 +1,185 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Escolha um profissional</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Escolha um profissional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f7f8fb; --card:#fff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --primary:#111827;
+    --ok:#10b981; --off:#ef4444; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .page{max-width:980px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+  .top{padding:16px 14px 0}
+  .title{margin:0;font-weight:800;font-size:clamp(1.05rem,1rem + 1vw,1.5rem)}
+  .note{color:var(--muted);font-size:12px;margin-top:4px}
 
-  <style>
-    :root{
-      --bg:#f7f8fb; --card:#fff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --primary:#111827;
-      --ok:#10b981; --off:#ef4444; --radius:14px;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .grid{display:grid;gap:12px;padding:12px;
+        grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+  .card{
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:14px; cursor:pointer; transition:box-shadow .15s ease, border-color .15s ease;
+  }
+  .card:hover{box-shadow:0 8px 24px rgba(0,0,0,.06)}
+  .card.selected{outline:2px solid var(--primary); outline-offset:2px}
+  .avatar{width:92px;height:92px;object-fit:cover;border-radius:999px;border:2px solid var(--border)}
+  .name{font-weight:800}
+  .skills{font-size:12px;color:var(--muted);text-align:center}
+  .badge{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--border)}
+  .badge.ok{background:#ecfdf5;color:#065f46;border-color:#d1fae5}
+  .badge.off{background:#fef2f2;color:#991b1b;border-color:#fee2e2}
 
-    .page{max-width:980px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
-    .top{padding:16px 14px 0}
-    .title{margin:0;font-weight:800;font-size:clamp(1.05rem,1rem + 1vw,1.5rem)}
-    .note{color:var(--muted);font-size:12px;margin-top:4px}
+  .skeleton{min-height:150px;border-radius:var(--radius);
+    animation:pulse 1s infinite ease-in-out;background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 37%,#f3f4f6 63%);background-size:400% 100%}
+  @keyframes pulse{0%{background-position:100% 0}100%{background-position:0 0}}
 
-    .grid{display:grid;gap:12px;padding:12px;
-      grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
-    .card{
-      display:flex;flex-direction:column;align-items:center;gap:8px;
-      background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
-      padding:14px; cursor:pointer; transition:box-shadow .15s ease, border-color .15s ease;
-    }
-    .card:hover{box-shadow:0 8px 24px rgba(0,0,0,.06)}
-    .card.selected{outline:2px solid var(--primary); outline-offset:2px}
-    .avatar{width:92px;height:92px;object-fit:cover;border-radius:999px;border:2px solid var(--border)}
-    .name{font-weight:800}
-    .skills{font-size:12px;color:var(--muted);text-align:center}
-    .badge{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--border)}
-    .badge.ok{background:#ecfdf5;color:#065f46;border-color:#d1fae5}
-    .badge.off{background:#fef2f2;color:#991b1b;border-color:#fee2e2}
+  .footer{margin-top:auto;padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:space-between}
+  .btn{border:1px solid var(--border);background:var(--card);padding:10px 14px;border-radius:999px;font-weight:700;cursor:pointer}
+  .btn[disabled]{opacity:.5;cursor:not-allowed}
+  .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
 
-    .skeleton{min-height:150px;animation:pulse 1s infinite ease-in-out;background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 37%,#f3f4f6 63%);background-size:400% 100%}
-    @keyframes pulse{0%{background-position:100% 0}100%{background-position:0 0}}
-
-    .footer{margin-top:auto;padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:space-between}
-    .btn{border:1px solid var(--border);background:var(--card);padding:10px 14px;border-radius:999px;font-weight:700;cursor:pointer}
-    .btn[disabled]{opacity:.5;cursor:not-allowed}
-    .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
-  </style>
+  .alert{border:1px solid var(--border);background:#fff;padding:12px;border-radius:12px}
+  .alert.error{border-color:#fecaca;background:#fef2f2;color:#991b1b}
+</style>
 </head>
 <body>
-  <main class="page">
-    <header class="top">
-      <h1 class="title">Escolha um profissional</h1>
-      <div class="note" id="legend"></div>
-    </header>
+<main class="page">
+  <header class="top">
+    <h1 class="title">Escolha um profissional</h1>
+    <div class="note" id="legend"></div>
+  </header>
 
-    <!-- onde os cards entram -->
-    <section class="grid" id="profGrid"></section>
+  <section class="grid" id="grid"></section>
 
-    <footer class="footer">
-      <button class="btn" id="btn-back">← Voltar</button>
-      <button class="btn btn-primary" id="btn-next" disabled>Continuar →</button>
-    </footer>
-  </main>
+  <footer class="footer">
+    <button class="btn" id="btnBack">← Voltar</button>
+    <button class="btn btn-primary" id="btnNext" disabled>Continuar →</button>
+  </footer>
+</main>
 
-  <script src="js/profissionais.js"></script>
+<script>
+(function(){
+  // ================== CONFIG ==================
+  const N8N_BASE = localStorage.getItem('n8n_base')
+    || 'https://primary-odonto.up.railway.app/webhook/barber';
+  const ENDPOINT = `${N8N_BASE}/professionals`;
+
+  const GRID = document.getElementById('grid');
+  const BTN_NEXT = document.getElementById('btnNext');
+  const BTN_BACK = document.getElementById('btnBack');
+  const LEGEND   = document.getElementById('legend');
+
+  // Frase "Disponíveis para terça, 2 de setembro às 15:00"
+  (function setLegend(){
+    const iso = sessionStorage.getItem('booking.date');
+    const time = sessionStorage.getItem('booking.time');
+    if (!iso || !time) return;
+    const d = new Date(iso);
+    LEGEND.textContent =
+      `Disponíveis para ${d.toLocaleDateString('pt-BR',{weekday:'long', day:'numeric', month:'long'})} às ${time}`;
+  })();
+
+  let selectedId = sessionStorage.getItem('booking.professional_id') || null;
+
+  // ================== UI ==================
+  function showSkeleton(){
+    GRID.innerHTML = `
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    `;
+  }
+  function showEmpty(){
+    GRID.innerHTML = `<p style="color:#6b7280">Nenhum profissional encontrado.</p>`;
+  }
+  function showError(msg){
+    GRID.innerHTML = `
+      <div class="alert error">
+        <strong>Erro ao carregar profissionais</strong><br>
+        <small>${msg}</small>
+      </div>
+      <button class="btn" id="btnTry">Tentar novamente</button>
+    `;
+    document.getElementById('btnTry')?.addEventListener('click', load);
+  }
+  function render(list){
+    GRID.innerHTML = list.map(p => `
+      <button class="card ${selectedId===String(p.id)?'selected':''}" data-id="${p.id}">
+        <img class="avatar" src="${p.avatar || `https://i.pravatar.cc/160?u=${encodeURIComponent(p.id)}`}" alt="${p.name}">
+        <div class="name">${p.name}</div>
+        ${p.skills?.length ? `<div class="skills">${p.skills.join(', ')}</div>` : `<div class="skills">—</div>`}
+        <div class="badge ${p.available ? 'ok':'off'}">${p.available ? 'Disponível':'Indisponível'}</div>
+      </button>
+    `).join('');
+
+    GRID.querySelectorAll('.card').forEach(card=>{
+      card.addEventListener('click', ()=>{
+        GRID.querySelectorAll('.card.selected').forEach(c=>c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedId = card.dataset.id;
+        sessionStorage.setItem('booking.professional_id', selectedId);
+        BTN_NEXT.disabled = false;
+      });
+    });
+
+    BTN_NEXT.disabled = !selectedId;
+  }
+
+  // ================== FETCH ==================
+  async function load(){
+    try{
+      showSkeleton();
+
+      const iso = sessionStorage.getItem('booking.date') || '';
+      const time = sessionStorage.getItem('booking.time') || '';
+      const qs = new URLSearchParams({ date: iso, time, duration: '30' });
+      const url = `${ENDPOINT}?${qs}`;
+
+      console.log('[professionals] endpoint =', url);
+      const res = await fetch(url, { method:'GET' });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      // Pode vir { professionals: [...] } ou diretamente [...]
+      let data = await res.json();
+      console.log('[professionals] raw payload =', data);
+
+      let list = [];
+      if (Array.isArray(data)) {
+        list = data;
+      } else if (data && Array.isArray(data.professionals)) {
+        list = data.professionals;
+      } else if (data && data.data && Array.isArray(data.data.professionals)) {
+        list = data.data.professionals; // fallback, caso venha aninhado
+      }
+
+      console.log('[professionals] parsed list =', list);
+
+      if(!list.length){ showEmpty(); return; }
+      render(list);
+    }catch(err){
+      console.error('[professionals] error:', err);
+      showError(err.message || 'Falha ao buscar profissionais.');
+    }
+  }
+
+  // ================== NAV ==================
+  BTN_BACK.addEventListener('click', ()=> history.back());
+  BTN_NEXT.addEventListener('click', ()=>{
+    if(!selectedId) return;
+    // próximo passo do funil
+    location.href = 'login.html';
+  });
+
+  // start
+  load();
+})();
+</script>
 </body>
 </html>
