@@ -152,3 +152,99 @@
     }
   }
 })();
+
+// ====== CALENDÁRIO (mês) ======
+(function initCalendar() {
+  const calGrid  = document.getElementById('calGrid');
+  const calPrev  = document.getElementById('calPrev');
+  const calNext  = document.getElementById('calNext');
+  const calLabel = document.getElementById('calMonthLabel');
+
+  if (!calGrid) return;
+
+  // Estado de visualização (mês/ano sendo exibidos)
+  let selectedISO = sessionStorage.getItem('booking.date') || toISODateOnly(new Date());
+  let view = isoToYM(selectedISO); // {y,m}
+
+  renderCalendar(view.y, view.m, selectedISO);
+
+  calPrev?.addEventListener('click', () => {
+    view = stepMonth(view.y, view.m, -1);
+    renderCalendar(view.y, view.m, selectedISO);
+  });
+  calNext?.addEventListener('click', () => {
+    view = stepMonth(view.y, view.m, +1);
+    renderCalendar(view.y, view.m, selectedISO);
+  });
+
+  function isoToYM(iso) {
+    const [y,m] = iso.split('-').map(Number);
+    return { y, m };
+  }
+  function stepMonth(y, m, delta) {
+    const d = new Date(y, m-1 + delta, 1);
+    return { y: d.getFullYear(), m: d.getMonth()+1 };
+  }
+  function daysInMonth(y, m) {
+    return new Date(y, m, 0).getDate();
+  }
+  function firstWeekdayIndex(y, m) {
+    // domingo=0 … sábado=6
+    return new Date(y, m-1, 1).getDay();
+  }
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function ymd(y,m,d){ return `${y}-${pad2(m)}-${pad2(d)}`; }
+
+  function renderCalendar(y, m, selectedIso) {
+    // Label do mês
+    const label = new Date(y, m-1, 1).toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
+    calLabel.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+
+    calGrid.innerHTML = '';
+    const todayIso = toISODateOnly(new Date());
+    const total = daysInMonth(y, m);
+    const startIdx = firstWeekdayIndex(y, m); // 0..6 domingo..sábado
+
+    // Blanks antes do dia 1
+    for (let i=0; i<startIdx; i++) {
+      const b = document.createElement('div');
+      b.className = 'cal-cell muted';
+      b.setAttribute('aria-hidden', 'true');
+      calGrid.appendChild(b);
+    }
+
+    // Dias do mês
+    for (let d=1; d<=total; d++) {
+      const iso = ymd(y, m, d);
+      const cell = document.createElement('button');
+      cell.className = 'cal-cell';
+      cell.textContent = d;
+
+      // Finais de semana (domingo=0, sábado=6)
+      const weekday = new Date(y, m-1, d).getDay();
+      if (weekday===0 || weekday===6) cell.classList.add('weekend');
+
+      if (iso === todayIso) cell.classList.add('today');
+      if (iso === selectedIso) cell.classList.add('selected');
+
+      // Desabilita datas passadas
+      if (iso < todayIso) cell.classList.add('disabled');
+
+      cell.dataset.date = iso;
+      cell.addEventListener('click', () => {
+        // Atualiza seleção visual
+        calGrid.querySelectorAll('.cal-cell.selected').forEach(el=>el.classList.remove('selected'));
+        cell.classList.add('selected');
+
+        // Persiste, atualiza label e recarrega slots
+        selectedISO = iso;
+        sessionStorage.setItem('booking.date', iso);
+        const labelDia = document.getElementById('label-dia');
+        if (labelDia) labelDia.textContent = formatDatePt(iso);
+        loadSlots(iso);
+      });
+
+      calGrid.appendChild(cell);
+    }
+  }
+})();
