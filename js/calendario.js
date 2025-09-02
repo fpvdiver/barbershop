@@ -34,6 +34,23 @@
   // Voltar
   btnVoltar?.addEventListener('click', () => history.back());
 
+  // ==== Helpers de data ====
+function toISODateOnly(date) {
+  // Retorna YYYY-MM-DD em UTC local
+  const d = new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatDatePt(iso) {
+  // Retorna: terça-feira, 2 de setembro
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+}
+
+
   // ================== FUNÇÕES ==================
 
   function toISODateOnly(d) {
@@ -248,3 +265,4 @@
     }
   }
 })();
+
