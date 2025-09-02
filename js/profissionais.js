@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const N8N_BASE = localStorage.getItem('n8n_base') || 'https://primary-odonto.up.railway.app/webhook/barber';
   // Endpoint único desta tela:
   const API = `${N8N_BASE}/professionals`;
+console.log('[professionals] endpoint =', API);
 
   // Mostra a frase “Disponíveis para …”
   const iso  = sessionStorage.getItem('booking.date');
@@ -126,3 +127,4 @@ function escapeHtml(str = '') {
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 }
+
