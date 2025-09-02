@@ -1,128 +1,111 @@
-// /js/profissionais.js
 (() => {
+  // --- Endpoint (ajuste se quiser trocar sem recompilar) ---
+  const N8N_BASE = localStorage.getItem('n8n_base')
+    || 'https://primary-odonto.up.railway.app/webhook/barber';
+  const ENDPOINT = `${N8N_BASE}/professionals`;
+
   const GRID = document.getElementById('profGrid');
-  const BTN_CONTINUAR = document.getElementById('btn-continuar');
-  const BTN_VOLTAR = document.getElementById('btn-voltar');
+  const BTN_NEXT = document.getElementById('btn-next');
+  const BTN_BACK = document.getElementById('btn-back');
+  const LEGEND = document.getElementById('legend');
 
-  const N8N_BASE =
-    localStorage.getItem('n8n_base') ||
-    'https://primary-odonto.up.railway.app/webhook/barber';
-  const API = `${N8N_BASE}/professionals`;
-
-  // legenda (opcional)
-  const iso  = sessionStorage.getItem('booking.date') || '';
-  const time = sessionStorage.getItem('booking.time') || '';
-  if (iso && time) {
+  // Monta a frase "Disponíveis para terça, 2 de setembro às 15:00"
+  (function setLegend(){
+    const iso = sessionStorage.getItem('booking.date');
+    const time = sessionStorage.getItem('booking.time');
+    if (!iso || !time) return;
     const d = new Date(iso);
-    const legenda = d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
-    const header = document.querySelector('.top .title');
-    if (header) {
-      const note = document.createElement('div');
-      note.style.fontSize = '12px';
-      note.style.color = '#6b7280';
-      note.textContent = `Disponíveis para ${legenda} às ${time}`;
-      header.insertAdjacentElement('afterend', note);
-    }
-  }
+    LEGEND.textContent = `Disponíveis para ${d.toLocaleDateString('pt-BR',{weekday:'long', day:'numeric', month:'long'})} às ${time}`;
+  })();
 
-  let selectedId = null;
+  // Estado local
+  let selectedId = sessionStorage.getItem('booking.professional_id') || null;
 
-  // --- helper: extrai lista independente do formato vindo do n8n ---
-  function extractList(data) {
-    // Já é array direto?
-    if (Array.isArray(data)) return data.slice();
-
-    // Campo professionals como array?
-    if (Array.isArray(data?.professionals)) return data.professionals.slice();
-
-    // Campo professionals como objeto { "0": {...}, "1": {...} } ?
-    if (data?.professionals && typeof data.professionals === 'object') {
-      try { return Object.values(data.professionals); } catch {}
-    }
-
-    // Campo items como array?
-    if (Array.isArray(data?.items)) return data.items.slice();
-
-    return [];
-  }
-
-  async function loadProfessionals() {
-    // skeleton
+  // UI helpers
+  function showSkeleton(){
     GRID.innerHTML = `
       <div class="card skeleton"></div>
       <div class="card skeleton"></div>
       <div class="card skeleton"></div>
       <div class="card skeleton"></div>
     `;
+  }
+  function showEmpty(){
+    GRID.innerHTML = `<p style="color:#6b7280">Nenhum profissional encontrado.</p>`;
+  }
+  function showError(msg){
+    GRID.innerHTML = `
+      <div style="border:1px solid #fee2e2;background:#fef2f2;color:#991b1b;padding:12px;border-radius:12px">
+        <strong>Erro ao carregar profissionais</strong><br>
+        <small>${msg}</small>
+      </div>
+      <button class="btn" id="btn-try">Tentar novamente</button>
+    `;
+    document.getElementById('btn-try')?.addEventListener('click', load);
+  }
+  function render(list){
+    GRID.innerHTML = list.map(p => `
+      <button class="card ${selectedId && selectedId===String(p.id) ? 'selected':''}" data-id="${p.id}">
+        <img class="avatar" src="${p.avatar || `https://i.pravatar.cc/160?u=${encodeURIComponent(p.id)}`}" alt="${p.name}">
+        <div class="name">${p.name}</div>
+        ${p.skills?.length ? `<div class="skills">${p.skills.join(', ')}</div>` : `<div class="skills">—</div>`}
+        <div class="badge ${p.available ? 'ok':'off'}">${p.available ? 'Disponível' : 'Indisponível'}</div>
+      </button>
+    `).join('');
 
-    try {
-      const params = { date: iso, time, duration: 30 };
-      if (!params.date || !params.time) params.includeUnavailable = 1;
+    GRID.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', () => {
+        // marca visual
+        GRID.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
 
-      const url = `${API}?${new URLSearchParams(params).toString()}`;
+        selectedId = card.dataset.id;
+        sessionStorage.setItem('booking.professional_id', selectedId);
+        BTN_NEXT.disabled = false;
+      });
+    });
+
+    // habilita continuar se já havia pré-seleção
+    BTN_NEXT.disabled = !selectedId;
+  }
+
+  async function load(){
+    try{
+      showSkeleton();
+
+      // monta query com date/time para o filtro de disponibilidade (se você quiser)
+      const iso = sessionStorage.getItem('booking.date') || '';
+      const time = sessionStorage.getItem('booking.time') || '';
+      const qs = new URLSearchParams({ date: iso, time, duration: '30' }); // ajuste se precisar
+      const url = `${ENDPOINT}?${qs}`;
+
       console.log('[professionals] endpoint =', url);
 
-      const res = await fetch(url, { method: 'GET' });
+      const res = await fetch(url, { method:'GET' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
 
-      const text = await res.text();
-      let data;
-      try { data = JSON.parse(text); } catch { data = text; }
+      // o n8n devolve { professionals: [...] }
+      const list = Array.isArray(data.professionals) ? data.professionals : [];
+
       console.log('[professionals] payload =', data);
+      console.log('[professionals] list (after extract) =', list);
 
-      let list = extractList(data);
-      console.log('[professionals] list (after extract) =', list, 'len=', list.length);
-
-      if (!list.length) {
-        GRID.innerHTML = `<p style="color:#6b7280">Nenhum profissional encontrado.</p>`;
-        BTN_CONTINUAR.disabled = true;
-        return;
-      }
-
-      // Render de TODOS de uma vez (nunca sobrescrever dentro do loop!)
-      GRID.innerHTML = list.map(p => `
-        <button class="card" data-id="${p.id}" aria-label="Selecionar ${p.name || 'profissional'}">
-          <img src="${p.avatar || `https://i.pravatar.cc/160?u=${encodeURIComponent(p.id || p.name || '')}`}" class="avatar" alt="${p.name || 'Profissional'}">
-          <div class="name">${p.name || 'Profissional'}</div>
-          ${p.skills?.length ? `<div class="skills">${p.skills.join(', ')}</div>` : ''}
-          <div class="badge ${p.available ? 'ok' : 'off'}">${p.available ? 'Disponível' : 'Indisponível'}</div>
-        </button>
-      `).join('');
-
-      // listeners
-      GRID.querySelectorAll('.card').forEach(card => {
-        card.addEventListener('click', () => {
-          GRID.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
-          card.classList.add('selected');
-          selectedId = card.dataset.id;
-          BTN_CONTINUAR.disabled = false;
-          sessionStorage.setItem('booking.professional_id', selectedId);
-        });
-      });
-
-      // pré-seleção
-      const saved = sessionStorage.getItem('booking.professional_id');
-      if (saved) GRID.querySelector(`.card[data-id="${CSS.escape(saved)}"]`)?.click();
-
-    } catch (err) {
+      if (!list.length) { showEmpty(); return; }
+      render(list);
+    }catch(err){
       console.error(err);
-      GRID.innerHTML = `
-        <div class="alert error">
-          <strong>Erro ao carregar profissionais</strong><br>
-          <small>${err.message}</small>
-        </div>
-        <button class="btn" id="btnTry">Tentar novamente</button>
-      `;
-      document.getElementById('btnTry')?.addEventListener('click', loadProfessionals);
-      BTN_CONTINUAR.disabled = true;
+      showError(err.message || 'Falha ao buscar profissionais.');
     }
   }
 
-  BTN_VOLTAR?.addEventListener('click', () => history.back());
-  BTN_CONTINUAR?.addEventListener('click', () => {
+  BTN_BACK.addEventListener('click', () => history.back());
+  BTN_NEXT.addEventListener('click', () => {
     if (!selectedId) return;
+    // segue no funil: se quiser forçar login/cadastro, redirecione
+    // Exemplo simples: mandar pra login.html
     location.href = 'login.html';
   });
 
-  loadProfessionals();
+  load();
 })();
