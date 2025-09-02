@@ -1,199 +1,141 @@
-/* 
-  Calendário + horários (idêntico ao print)
-  - Lê serviços escolhidos: localStorage.booking_services
-  - Carrega disponibilidade via n8n (provider = 'n8n')
-    • GET  /availability?date=YYYY-MM-DD&services=id1,id2
-    → { daysAvailable: [1,2,3,...], slots: ["10:00","11:00",...] }  // slots depende do dia consultado
-  - Fallback: gera disponibilidade mock se a API não responder.
+// js/calendario.js
+(function(){
+  const $ = (s,r=document)=>r.querySelector(s);
+  const calGrid = $('#calGrid');
+  const slotsEl = $('#slots');
+  const lblDia  = $('#label-dia');
+  const btnVoltar = $('#btn-voltar');
 
-  Para Google Calendar, use o n8n como proxy (recomendado), mantendo o mesmo contrato.
-*/
+  // Config
+  const ENDPOINT = 'https://primary-odonto.up.railway.app/webhook/barber/availability';
+  const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
+  // duração: use a soma dos serviços escolhidos se quiser maior precisão
+  const selSummary = JSON.parse(localStorage.getItem('selected_services_summary') || '{}');
+  const DURATION = selSummary?.totalMin || 30; // fallback 30min
+  const CALENDAR_ID = 'primary'; // ou id da agenda do barbeiro
 
-const CONFIG = {
-  provider: 'n8n', // 'n8n' | 'mock'
-  N8N_BASE: 'https://your-n8n.example.com/webhook/barber'
-};
+  // estado calendário
+  let current = new Date(); // hoje
+  let selectedDate = toYMD(current);
+  let selectedTime = null;
 
-const BR_MONTHS = [
-  'janeiro','fevereiro','março','abril','maio','junho',
-  'julho','agosto','setembro','outubro','novembro','dezembro'
-];
-
-const $ = (q,root=document)=>root.querySelector(q);
-const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
-
-const state = {
-  month: new Date(),         // mês atual
-  selectedDate: null,        // Date
-  daysAvailable: new Set(),  // dias do mês com underline verde
-  services: JSON.parse(localStorage.getItem('booking_services')||'[]'),
-  slots: []
-};
-
-const grid = $('#calGrid');
-const slotsWrap = $('#slots');
-const labelDia = $('#label-dia');
-
-document.addEventListener('DOMContentLoaded', async () => {
-  $('#btn-fechar').addEventListener('click', () => history.back());
-  $('#btn-voltar').addEventListener('click', () => history.back());
-
-  // Disponibilidade por mês (sublinha dias)
-  await loadMonthAvailability(state.month);
-  renderCalendar();
-
-  // Pré-seleciona hoje se disponível
-  const today = new Date();
-  if (isSameYM(today, state.month) && state.daysAvailable.has(today.getDate())) {
-    pickDate(today);
+  function toYMD(d){
+    return d.toISOString().slice(0,10);
   }
-});
-
-/* ============ RENDER CALENDAR ============ */
-function renderCalendar(){
-  grid.innerHTML = '';
-
-  const cur = state.month;
-  const year = cur.getFullYear();
-  const month = cur.getMonth();
-
-  const first = new Date(year, month, 1);
-  const last  = new Date(year, month+1, 0);
-
-  // preenchimento até domingo (0) no início
-  const pad = first.getDay(); // 0..6 (dom..sáb)
-  for (let i=0; i<pad; i++) grid.appendChild(placeholderDay());
-
-  for (let d=1; d<=last.getDate(); d++){
-    const date = new Date(year, month, d);
-    const isPast = +stripTime(date) < +stripTime(new Date());
-    const isWeekend = [0,6].includes(date.getDay());
-
-    const el = document.createElement('button');
-    el.type = 'button';
-    el.className = 'day' + (isWeekend?' weekend':'') + (isPast?' past':' enabled');
-    el.innerHTML = `<span class="num">${d}</span>` + (state.daysAvailable.has(d)?'<span class="underline"></span>':'');
-
-    if (!isPast){
-      el.addEventListener('click', () => pickDate(date, el));
-    }
-
-    if (state.selectedDate && sameDate(state.selectedDate, date)){
-      el.classList.add('selected');
-    }
-
-    grid.appendChild(el);
+  function monthLabel(d){
+    return d.toLocaleDateString('pt-BR',{ month:'long', year:'numeric' });
   }
-}
+  function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+  function endOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
 
-function placeholderDay(){
-  const ph = document.createElement('div');
-  ph.className = 'day';
-  ph.style.visibility = 'hidden';
-  return ph;
-}
+  async function loadSlots(dateStr){
+    slotsEl.innerHTML = '<div class="muted">Carregando horários…</div>';
+    lblDia.textContent = new Date(dateStr).toLocaleDateString('pt-BR',{ day:'numeric', month:'long' });
 
-/* ============ PICK DATE & LOAD SLOTS ============ */
-async function pickDate(date, el){
-  state.selectedDate = date;
-  $$('.day.enabled').forEach(d => d.classList.remove('selected'));
-  el?.classList.add('selected');
+    const url = new URL(ENDPOINT);
+    url.searchParams.set('date', dateStr);
+    url.searchParams.set('duration', String(DURATION));
+    url.searchParams.set('tz', TZ);
+    url.searchParams.set('calendarId', CALENDAR_ID);
 
-  // Label: "2 Setembro"
-  labelDia.textContent = `${date.getDate()} ${BR_MONTHS[date.getMonth()].charAt(0).toUpperCase()}${BR_MONTHS[date.getMonth()].slice(1)}`;
+    try{
+      const res = await fetch(url.toString(), { method:'GET', mode:'cors', cache:'no-cache' });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      renderSlots(data.slots || []);
+    }catch(err){
+      console.error('[availability]', err);
+      slotsEl.innerHTML = `
+        <div class="card">
+          <strong>Erro ao carregar horários</strong>
+          <div class="muted">${err.message || 'Tente novamente.'}</div>
+          <button class="ghost-btn" id="retry">Tentar novamente</button>
+        </div>`;
+      $('#retry')?.addEventListener('click', ()=> loadSlots(dateStr));
+    }
+  }
 
-  await loadDaySlots(date);
-  renderSlots();
-}
+  function renderSlots(slots){
+    if(!slots.length){
+      slotsEl.innerHTML = `<div class="muted">Sem horários para este dia.</div>`;
+      return;
+    }
+    slotsEl.innerHTML = slots.map(h =>
+      `<button class="slot" data-h="${h}" style="padding:10px 12px;border-radius:999px;border:1px solid var(--border);background:#d1fae5">${h}</button>`
+    ).join(' ');
+  }
 
-function renderSlots(){
-  slotsWrap.innerHTML = '';
-  const frag = document.createDocumentFragment();
-  (state.slots||[]).forEach(hhmm => {
-    const el = document.createElement('button');
-    el.className = 'slot';
-    el.textContent = hhmm;
-    el.addEventListener('click', () => {
-      $$('.slot').forEach(s=>s.classList.remove('selected'));
-      el.classList.add('selected');
-      // Persistimos e vamos para a próxima etapa (login/criar conta)
-      localStorage.setItem('booking_date', ymd(state.selectedDate));
-      localStorage.setItem('booking_time', hhmm);
-      // Ex.: location.href = '/login.html';
-      alert(`Selecionado: ${ymd(state.selectedDate)} ${hhmm}`);
-    });
-    frag.appendChild(el);
+  function renderCalendar(d){
+    calGrid.innerHTML = '';
+    const first = startOfMonth(d);
+    const last  = endOfMonth(d);
+
+    // início da grade no domingo anterior
+    const start = new Date(first);
+    start.setDate(first.getDate() - first.getDay());
+    // fim da grade no sábado posterior
+    const end = new Date(last);
+    end.setDate(last.getDate() + (6 - last.getDay()));
+
+    const today = new Date();
+    for(let cur = new Date(start); cur <= end; cur.setDate(cur.getDate()+1)){
+      const ymd = toYMD(cur);
+      const inMonth = (cur.getMonth() === d.getMonth());
+      const isPast = cur < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const btn = document.createElement('button');
+      btn.className = 'cal-cell';
+      btn.style.cssText = `
+        width:44px;height:44px;border-radius:999px;border:0;background:${ymd===selectedDate?'#111':'transparent'};
+        color:${ymd===selectedDate?'#fff': (inMonth ? 'inherit' : 'var(--muted)')};
+        opacity:${isPast? '.4' : '1'};
+        font-weight:800;`;
+      btn.textContent = String(cur.getDate());
+      btn.disabled = isPast;
+
+      btn.addEventListener('click', ()=>{
+        selectedDate = ymd; selectedTime = null;
+        renderCalendar(d);
+        loadSlots(ymd);
+      });
+      calGrid.appendChild(btn);
+    }
+  }
+
+  // selecionar horário
+  slotsEl.addEventListener('click', (e)=>{
+    const t = e.target;
+    if(!(t instanceof HTMLElement)) return;
+    if(t.classList.contains('slot')){
+      selectedTime = t.dataset.h;
+      // estiliza seleção
+      [...slotsEl.querySelectorAll('.slot')].forEach(b => b.style.background = '#d1fae5');
+      t.style.background = '#34d399';
+      // abre modal/confirm?
+      confirmSelection();
+    }
   });
-  slotsWrap.appendChild(frag);
-}
 
-/* ============ DATA PROVIDERS ============ */
-async function loadMonthAvailability(date){
-  try{
-    if (CONFIG.provider === 'n8n'){
-      const start = firstOfMonth(date);
-      const query = new URLSearchParams({
-        month: String(start.getMonth()+1).padStart(2,'0'),
-        year: String(start.getFullYear()),
-        services: state.services.join(',')
-      });
-      const r = await fetch(`${CONFIG.N8N_BASE}/availability/month?${query}`);
-      if (!r.ok) throw new Error('HTTP '+r.status);
-      const data = await r.json(); // { daysAvailable:[1,2,3...] }
-      state.daysAvailable = new Set(data.daysAvailable || []);
-    } else {
-      // mock
-      state.daysAvailable = mockMonthAvailability(date);
+  function confirmSelection(){
+    if(!selectedDate || !selectedTime) return;
+    // salva e segue para profissionais
+    localStorage.setItem('booking_date', selectedDate);
+    localStorage.setItem('booking_time', selectedTime);
+    // se quiser mostrar um modal, substitua pelas suas UI
+    if(confirm(`Confirmar ${selectedDate} às ${selectedTime}?`)){
+      location.href = 'profissionais.html';
     }
-  } catch(e){
-    console.warn('[availability/month] fallback mock:', e.message);
-    state.daysAvailable = mockMonthAvailability(date);
   }
-}
 
-async function loadDaySlots(date){
-  try{
-    if (CONFIG.provider === 'n8n'){
-      const query = new URLSearchParams({
-        date: ymd(date),
-        services: state.services.join(',')
-      });
-      const r = await fetch(`${CONFIG.N8N_BASE}/availability?${query}`);
-      if (!r.ok) throw new Error('HTTP '+r.status);
-      const data = await r.json(); // { slots:["10:00","11:00",...] }
-      state.slots = data.slots || [];
-    } else {
-      state.slots = mockSlots(date);
-    }
-  } catch(e){
-    console.warn('[availability/day] fallback mock:', e.message);
-    state.slots = mockSlots(date);
-  }
-}
+  // nav meses (se tiver botões, chame estas)
+  // nextMonth() / prevMonth()
+  function nextMonth(){ current = new Date(current.getFullYear(), current.getMonth()+1, 1); renderCalendar(current); }
+  function prevMonth(){ current = new Date(current.getFullYear(), current.getMonth()-1, 1); renderCalendar(current); }
 
-/* ============ UTILS ============ */
-function ymd(d){ return d.toISOString().slice(0,10); }
-function stripTime(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-function sameDate(a,b){ return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
-function isSameYM(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth(); }
-function firstOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+  // init
+  document.addEventListener('DOMContentLoaded', ()=>{
+    renderCalendar(current);
+    loadSlots(selectedDate);
+  });
 
-/* ============ MOCKS (fallback visual) ============ */
-function mockMonthAvailability(date){
-  const last = new Date(date.getFullYear(), date.getMonth()+1, 0).getDate();
-  const set = new Set();
-  for (let d=1; d<=last; d++){
-    // sublinha quase todos os dias, exceto alguns
-    if (![6,12,18,24].includes(d)) set.add(d);
-  }
-  return set;
-}
-function mockSlots(date){
-  // slots fixos como no print
-  const base = ['10:00','11:00','12:00','13:00','14:00','15:00','16:00','19:00'];
-  // bloqueia domingo e segunda à tarde como exemplo
-  const day = date.getDay();
-  if (day === 0) return []; // domingo sem horários
-  if (day === 1) return base.filter(h=>!['15:00','16:00','19:00'].includes(h));
-  return base;
-}
+  btnVoltar?.addEventListener('click', ()=> history.back());
+})();
