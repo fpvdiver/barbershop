@@ -1,32 +1,67 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Selecione um serviço</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/servicos.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Escolha seus serviços</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .top {display:flex;align-items:center;gap:10px;padding:12px}
+    .title {font-weight:800;margin:0}
+    .subtitle {color:var(--muted);margin:2px 0 0}
+    .btn-ghost {border:1px solid var(--border);background:#fff;border-radius:999px;padding:8px 12px;font-weight:700}
+    .search-wrap {display:flex;gap:8px;padding:12px}
+    .search-wrap input {flex:1}
+    .services-grid {display:grid;gap:10px;padding:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+    @media (min-width:720px){ .services-grid{grid-template-columns:repeat(3,minmax(0,1fr))} }
+    .svc {background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;display:grid;gap:8px}
+    .svc h3 {margin:0;font-size:1rem}
+    .svc p {margin:0;color:var(--muted);font-size:.9rem}
+    .svc .row {display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .price {font-weight:800}
+    .skeleton {animation:pulse 1.1s infinite ease-in-out;background:linear-gradient(90deg,#eee,#f6f6f6,#eee);height:90px;border-radius:12px}
+    @keyframes pulse {0%{background-position:-200px 0}100%{background-position:calc(200px + 100%) 0}}
+    .footer {position:sticky;bottom:0;background:var(--bg);padding:12px;border-top:1px solid var(--border)}
+    .btn-primary {background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:12px;padding:12px 14px;font-weight:800;width:100%}
+    .badge {padding:4px 8px;border-radius:8px;background:#f3f4f6;font-weight:700;font-size:.8rem}
+    .muted { color: var(--muted); }
+    .error { color: #b91c1c; font-weight:700; }
+  </style>
 </head>
 <body>
-<main class="page">
-<header class="top">
-<h1 class="title">Selecione um serviço</h1>
-<button class="close" id="btn-fechar" aria-label="Fechar">×</button>
-</header>
+  <main class="page">
+    <header class="top">
+      <button class="btn-ghost" type="button" onclick="history.back()">← Voltar</button>
+      <div>
+        <h1 class="title">Escolha seus serviços</h1>
+        <p class="subtitle">Você pode selecionar mais de um serviço</p>
+      </div>
+    </header>
 
+    <!-- Busca / filtros -->
+    <div class="search-wrap">
+      <input id="q" class="btn-ghost" type="search" placeholder="Buscar serviço…" />
+      <select id="duration" class="btn-ghost" title="Duração">
+        <option value="">Duração</option>
+        <option value="<=30">Até 30 min</option>
+        <option value="<=45">Até 45 min</option>
+        <option value=">45">Mais de 45 min</option>
+      </select>
+    </div>
 
-<section id="lista" class="list"></section>
+    <!-- Lista -->
+    <section class="services-grid" id="servicesList" aria-live="polite">
+      <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+    </section>
 
+    <div class="footer">
+      <button id="btnContinuar" class="btn-primary" disabled>Continuar</button>
+    </div>
+  </main>
 
-<div class="footer">
-<div class="count"><span id="count">0</span> selecionado(s)</div>
-<button id="btn-continuar" class="btn btn-primary" disabled>Continuar →</button>
-</div>
-</main>
-
-
-<script src="js/servicos.js"></script>
+  <script src="js/servicos.api.js"></script>
 </body>
 </html>
