@@ -16,10 +16,22 @@
         <button class="close" id="btn-fechar" aria-label="Fechar">×</button>
       </header>
 
-      <!-- Calendário -->
-      <section class="calendar card">
-        <div class="cal-grid" id="calGrid"></div>
-      </section>
+    <section class="calendar card">
+  <header class="cal-head">
+    <button class="cal-nav" id="calPrev" aria-label="Mês anterior">‹</button>
+    <div class="cal-label">
+      <strong id="calMonthLabel">—</strong>
+    </div>
+    <button class="cal-nav" id="calNext" aria-label="Próximo mês">›</button>
+  </header>
+
+  <div class="cal-weekdays">
+    <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+  </div>
+
+  <div class="cal-grid" id="calGrid"></div>
+</section>
+
 
       <!-- Slots -->
       <section class="slots-wrap">
@@ -64,4 +76,5 @@ document.getElementById('btn-fechar').onclick = () => history.back();
 
     <script src="js/calendario.js"></script>
   </body>
+
 </html>
