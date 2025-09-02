@@ -64,19 +64,6 @@
       `<button class="slot" data-h="${h}" style="padding:10px 12px;border-radius:999px;border:1px solid var(--border);background:#d1fae5">${h}</button>`
     ).join(' ');
   }
-// exemplo de função para normalizar a data selecionada
-function formatDateToISO(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`; // sempre YYYY-MM-DD
-}
-
-// quando o usuário clicar no dia:
-calendar.on('select', (date) => {
-  const isoDate = formatDateToISO(date);
-  loadHorarios(isoDate); // chama teu fetch com isoDate
-});
 
   function renderCalendar(d){
     calGrid.innerHTML = '';
@@ -152,4 +139,18 @@ calendar.on('select', (date) => {
 
   btnVoltar?.addEventListener('click', ()=> history.back());
 })();
+
+// exemplo de função para normalizar a data selecionada
+function formatDateToISO(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`; // sempre YYYY-MM-DD
+}
+
+// quando o usuário clicar no dia:
+calendar.on('select', (date) => {
+  const isoDate = formatDateToISO(date);
+  loadHorarios(isoDate); // chama teu fetch com isoDate
+});
 
