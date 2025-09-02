@@ -1,196 +1,34 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Selecione o Profissional</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/profissionais.css" />
-  </head>
-  <body>
-    <main class="page">
-      <header class="top">
-        <h1 class="title">Escolha um profissional</h1>
-        <p class="subtitle" id="hint-date"></p>
-      </header>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Selecione o Profissional</title>
 
-      <!-- Grid de profissionais -->
-      <section class="grid" id="profGrid" aria-live="polite"></section>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-      <footer class="footer">
-        <button class="btn btn-ghost" id="btn-voltar">← Voltar</button>
-        <button class="btn btn-primary" id="btn-continuar" disabled>Continuar →</button>
-      </footer>
-    </main>
+  <!-- Seu CSS desta página -->
+  <link rel="stylesheet" href="css/profissionais.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="top">
+      <h1 class="title">Escolha um profissional</h1>
+      <!-- A frase “Disponíveis para … às …” será inserida via JS logo abaixo do título -->
+    </header>
 
-    <script>
-      (function () {
-        // ========= CONFIG =========
-        const API_URL = 'https://primary-odonto.up.railway.app/webhook/barber/professionals'; // <-- teu webhook n8n
-        // Enviaremos GET ?date=YYYY-MM-DD&service_id=... (service_id opcional)
+    <!-- Grid de profissionais -->
+    <section class="grid" id="profGrid" aria-live="polite" aria-busy="true"></section>
 
-        // ========= ELEMENTOS =========
-        const grid = document.getElementById('profGrid');
-        const btnContinuar = document.getElementById('btn-continuar');
-        const btnVoltar = document.getElementById('btn-voltar');
-        const hintDate = document.getElementById('hint-date');
+    <footer class="footer">
+      <button class="btn btn-ghost" id="btn-voltar" type="button">← Voltar</button>
+      <button class="btn btn-primary" id="btn-continuar" type="button" disabled>Continuar →</button>
+    </footer>
+  </main>
 
-        // ========= CONTEXTO (do funil) =========
-        const selDate = sessionStorage.getItem('booking.date');
-        const selTime = sessionStorage.getItem('booking.time');
-        const selServiceId = sessionStorage.getItem('booking.service_id'); // se você guardar isso
-        if (selDate) {
-          hintDate.textContent = `Disponíveis para ${formatDatePt(selDate)}${selTime ? ' às ' + selTime : ''}`;
-        }
-
-        let selected = null;
-
-        // ========= RENDERING =========
-        function renderLoading() {
-          grid.innerHTML = `
-            <div class="card skeleton"></div>
-            <div class="card skeleton"></div>
-            <div class="card skeleton"></div>
-            <div class="card skeleton"></div>
-          `;
-        }
-
-        function renderError(msg) {
-          grid.innerHTML = `
-            <div class="alert error" role="status">
-              <strong>Erro ao carregar profissionais</strong><br>
-              <small>${msg || 'Tente novamente mais tarde.'}</small>
-            </div>
-            <button class="btn" id="btnTry">Tentar novamente</button>
-          `;
-          document.getElementById('btnTry')?.addEventListener('click', fetchProfessionals);
-        }
-
-        function renderList(list) {
-          if (!list || !list.length) {
-            grid.innerHTML = `
-              <div class="alert" role="status">
-                <strong>Nenhum profissional disponível</strong><br>
-                <small>Tente outro horário ou outra data.</small>
-              </div>
-            `;
-            return;
-          }
-
-          grid.innerHTML = '';
-          list.forEach(p => {
-            const card = document.createElement('button');
-            card.type = 'button';
-            card.className = 'card';
-            card.setAttribute('data-id', p.id);
-            card.setAttribute('aria-pressed', 'false');
-
-            const available = p.available !== false; // default true se não vier
-            const statusLabel = available ? 'Disponível' : (p.next_available ? `Próx: ${p.next_available}` : 'Indisponível');
-
-            card.innerHTML = `
-              <img src="${p.avatar || p.img || 'https://i.pravatar.cc/160?u=' + encodeURIComponent(p.id)}" alt="${escapeHtml(p.name || p.nome)}" class="avatar" />
-              <div class="name">${escapeHtml(p.name || p.nome)}</div>
-              ${p.skills ? `<div class="skills">${escapeHtml(p.skills.join(', '))}</div>` : ''}
-              <div class="status ${available ? 'ok' : 'muted'}">${statusLabel}</div>
-            `;
-
-            if (!available) card.classList.add('disabled');
-
-            card.addEventListener('click', () => {
-              if (!available) return;
-              grid.querySelectorAll('.card.selected').forEach(c => {
-                c.classList.remove('selected');
-                c.setAttribute('aria-pressed', 'false');
-              });
-              card.classList.add('selected');
-              card.setAttribute('aria-pressed', 'true');
-
-              selected = p;
-              btnContinuar.disabled = false;
-
-              // gravar pra etapa seguinte
-              sessionStorage.setItem('booking.barber_id', p.id);
-              sessionStorage.setItem('booking.barber_name', p.name || p.nome || '');
-            });
-
-            grid.appendChild(card);
-          });
-        }
-
-        // ========= FETCH =========
-        async function fetchProfessionals() {
-          try {
-            renderLoading();
-            const params = new URLSearchParams();
-            if (selDate) params.set('date', selDate);
-            if (selServiceId) params.set('service_id', selServiceId);
-
-            // GET sem headers → evita preflight e CORS chato
-            const url = `${API_URL}?${params.toString()}`;
-            const res = await fetch(url, { method: 'GET' });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const data = await res.json();
-
-            // formatos aceitos:
-            // { professionals:[{id,name,avatar,available,next_available,skills:[]}, ...] }
-            // OU diretamente um array
-            const list = Array.isArray(data) ? data : (data.professionals || data.itens || data.rows || []);
-            if (!list.length) {
-              // fallback: mostrar mock se quiser testar
-              return renderList(fallbackMock());
-            }
-            renderList(list);
-          } catch (err) {
-            console.error(err);
-            // fallback local de testes:
-            renderList(fallbackMock());
-            // se preferir mostrar erro ao invés do fallback, use:
-            // renderError(err.message);
-          }
-        }
-
-        // ========= AÇÕES =========
-        btnVoltar?.addEventListener('click', () => history.back());
-        btnContinuar.addEventListener('click', () => {
-          if (!selected) return;
-          // Próxima etapa do funil: login/cadastro
-          location.href = 'login.html';
-        });
-
-        // ========= INIT =========
-        fetchProfessionals();
-
-        // ========= UTILS =========
-        function escapeHtml(s) {
-          return String(s ?? '')
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#39;');
-        }
-        function formatDatePt(iso) {
-          const d = new Date(iso);
-          return d.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
-        }
-
-        function fallbackMock() {
-          // lista mínima para testes locais
-          return [
-            { id:'ana',   name:'Ana Santos',    avatar:'https://i.pravatar.cc/160?img=47', available:true,  skills:['Corte','Sobrancelha'] },
-            { id:'leo',   name:'Léo Martins',   avatar:'https://i.pravatar.cc/160?img=12', available:true,  skills:['Degradê','Navalhado'] },
-            { id:'maria', name:'Maria Souza',   avatar:'https://i.pravatar.cc/160?img=32', available:false, next_available:'14:00' },
-            { id:'joao',  name:'João Pedro',    avatar:'https://i.pravatar.cc/160?img=5',  available:true,  skills:['Clássico'] },
-            { id:'gui',   name:'Guilherme',     avatar:'https://i.pravatar.cc/160?img=22', available:true },
-            { id:'andre', name:'André',         avatar:'https://i.pravatar.cc/160?img=36', available:true },
-            { id:'davi',  name:'Davi',          avatar:'https://i.pravatar.cc/160?img=15', available:false, next_available:'17:00' },
-            { id:'paulo', name:'Paulo',         avatar:'https://i.pravatar.cc/160?img=8',  available:true },
-          ];
-        }
-      })();
-    </script>
-  </body>
+  <!-- Script da tela -->
+  <script src="js/profissionais.js"></script>
+</body>
 </html>
