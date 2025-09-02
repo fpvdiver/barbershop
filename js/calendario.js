@@ -1,156 +1,154 @@
-// js/calendario.js
-(function(){
-  const $ = (s,r=document)=>r.querySelector(s);
-  const calGrid = $('#calGrid');
-  const slotsEl = $('#slots');
-  const lblDia  = $('#label-dia');
-  const btnVoltar = $('#btn-voltar');
+/* js/calendario.js */
+(() => {
+  // ================== CONFIG ==================
+  const AVAIL_URL = 'https://primary-odonto.up.railway.app/webhook/barber/availability'; // <-- ajuste aqui
+  const slotsEl   = document.getElementById('slots');
+  const labelDia  = document.getElementById('label-dia');
+  const btnVoltar = document.getElementById('btn-voltar');
 
-  // Config
-  const ENDPOINT = 'https://primary-odonto.up.railway.app/webhook/barber/availability';
-  const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
-  // duração: use a soma dos serviços escolhidos se quiser maior precisão
-  const selSummary = JSON.parse(localStorage.getItem('selected_services_summary') || '{}');
-  const DURATION = selSummary?.totalMin || 30; // fallback 30min
-  const CALENDAR_ID = 'primary'; // ou id da agenda do barbeiro
+  // Data atual/selecionada (assuma que seu grid já define isso; se não, começa com hoje)
+  let selectedDate = toISODateOnly(new Date());
 
-  // estado calendário
-  let current = new Date(); // hoje
-  let selectedDate = toYMD(current);
-  let selectedTime = null;
+  // Se o seu grid já grava a data na sessionStorage, respeite:
+  const stored = sessionStorage.getItem('booking.date');
+  if (stored) selectedDate = stored;
 
-  function toYMD(d){
-    return d.toISOString().slice(0,10);
-  }
-  function monthLabel(d){
-    return d.toLocaleDateString('pt-BR',{ month:'long', year:'numeric' });
-  }
-  function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
-  function endOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
+  // Mostra label inicial e carrega slots
+  labelDia.textContent = formatDatePt(selectedDate);
+  loadSlots(selectedDate);
 
-  async function loadSlots(dateStr){
-    slotsEl.innerHTML = '<div class="muted">Carregando horários…</div>';
-    lblDia.textContent = new Date(dateStr).toLocaleDateString('pt-BR',{ day:'numeric', month:'long' });
-
-    const url = new URL(ENDPOINT);
-    url.searchParams.set('date', dateStr);
-    url.searchParams.set('duration', String(DURATION));
-    url.searchParams.set('tz', TZ);
-    url.searchParams.set('calendarId', CALENDAR_ID);
-
-    try{
-      const res = await fetch(url.toString(), { method:'GET', mode:'cors', cache:'no-cache' });
-      if(!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      renderSlots(data.slots || []);
-    }catch(err){
-      console.error('[availability]', err);
-      slotsEl.innerHTML = `
-        <div class="card">
-          <strong>Erro ao carregar horários</strong>
-          <div class="muted">${err.message || 'Tente novamente.'}</div>
-          <button class="ghost-btn" id="retry">Tentar novamente</button>
-        </div>`;
-      $('#retry')?.addEventListener('click', ()=> loadSlots(dateStr));
-    }
+  // Se seu grid de calendário dispara eventos, conecte aqui:
+  // Exemplo: clique no dia do calendário (cada célula tem data-date="YYYY-MM-DD")
+  const calGrid = document.getElementById('calGrid');
+  if (calGrid) {
+    calGrid.addEventListener('click', (e) => {
+      const cell = e.target.closest('[data-date]');
+      if (!cell) return;
+      selectedDate = cell.dataset.date;          // "YYYY-MM-DD"
+      labelDia.textContent = formatDatePt(selectedDate);
+      sessionStorage.setItem('booking.date', selectedDate);
+      loadSlots(selectedDate);
+    });
   }
 
-  function renderSlots(slots){
-    if(!slots.length){
-      slotsEl.innerHTML = `<div class="muted">Sem horários para este dia.</div>`;
-      return;
-    }
-    slotsEl.innerHTML = slots.map(h =>
-      `<button class="slot" data-h="${h}" style="padding:10px 12px;border-radius:999px;border:1px solid var(--border);background:#d1fae5">${h}</button>`
-    ).join(' ');
+  // Voltar
+  btnVoltar?.addEventListener('click', () => history.back());
+
+  // ================== FUNÇÕES ==================
+
+  function toISODateOnly(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
-  function renderCalendar(d){
-    calGrid.innerHTML = '';
-    const first = startOfMonth(d);
-    const last  = endOfMonth(d);
+  function formatDatePt(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('pt-BR', {
+      weekday: 'long', day: 'numeric', month: 'long'
+    });
+  }
 
-    // início da grade no domingo anterior
-    const start = new Date(first);
-    start.setDate(first.getDate() - first.getDay());
-    // fim da grade no sábado posterior
-    const end = new Date(last);
-    end.setDate(last.getDate() + (6 - last.getDay()));
+  function hmToMinutes(hm) {
+    const [h, m] = hm.split(':').map(Number);
+    return h * 60 + m;
+  }
+  function isoToMinutes(iso) {
+    const d = new Date(iso);
+    return d.getHours() * 60 + d.getMinutes();
+  }
 
-    const today = new Date();
-    for(let cur = new Date(start); cur <= end; cur.setDate(cur.getDate()+1)){
-      const ymd = toYMD(cur);
-      const inMonth = (cur.getMonth() === d.getMonth());
-      const isPast = cur < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const btn = document.createElement('button');
-      btn.className = 'cal-cell';
-      btn.style.cssText = `
-        width:44px;height:44px;border-radius:999px;border:0;background:${ymd===selectedDate?'#111':'transparent'};
-        color:${ymd===selectedDate?'#fff': (inMonth ? 'inherit' : 'var(--muted)')};
-        opacity:${isPast? '.4' : '1'};
-        font-weight:800;`;
-      btn.textContent = String(cur.getDate());
-      btn.disabled = isPast;
+  function renderLoading() {
+    slotsEl.innerHTML = `
+      <div class="slot-skeleton"></div>
+      <div class="slot-skeleton"></div>
+      <div class="slot-skeleton"></div>
+      <div class="slot-skeleton"></div>
+    `;
+  }
 
-      btn.addEventListener('click', ()=>{
-        selectedDate = ymd; selectedTime = null;
-        renderCalendar(d);
-        loadSlots(ymd);
+  function renderError(msg) {
+    slotsEl.innerHTML = `
+      <div class="alert error">
+        <strong>Erro ao carregar horários</strong><br>
+        <small>${msg || 'Tente novamente mais tarde.'}</small>
+      </div>
+      <button class="btn" id="btnTry">Tentar novamente</button>
+    `;
+    document.getElementById('btnTry')?.addEventListener('click', () => loadSlots(selectedDate));
+  }
+
+  function renderEmpty() {
+    slotsEl.innerHTML = `
+      <div class="alert">
+        <strong>Sem horários</strong><br>
+        <small>Não há horários disponíveis para este dia.</small>
+      </div>
+    `;
+  }
+
+  function renderSlots(hours) {
+    if (!hours.length) return renderEmpty();
+
+    slotsEl.innerHTML = hours.map(h => `
+      <button class="slot" data-time="${h}" aria-label="Agendar às ${h}">${h}</button>
+    `).join('');
+
+    // clique para selecionar
+    slotsEl.querySelectorAll('.slot').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // marca visualmente
+        slotsEl.querySelectorAll('.slot.selected').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+
+        const time = btn.dataset.time;
+        // guarda e redireciona (ou abre modal de confirmação, se preferir)
+        sessionStorage.setItem('booking.date', selectedDate);
+        sessionStorage.setItem('booking.time', time);
+
+        // Se quiser pedir um OK antes:
+        if (confirm(`Confirmar ${formatDatePt(selectedDate)} às ${time}?`)) {
+          location.href = 'profissionais.html'; // próximo passo do funil
+        }
       });
-      calGrid.appendChild(btn);
-    }
+    });
   }
 
-  // selecionar horário
-  slotsEl.addEventListener('click', (e)=>{
-    const t = e.target;
-    if(!(t instanceof HTMLElement)) return;
-    if(t.classList.contains('slot')){
-      selectedTime = t.dataset.h;
-      // estiliza seleção
-      [...slotsEl.querySelectorAll('.slot')].forEach(b => b.style.background = '#d1fae5');
-      t.style.background = '#34d399';
-      // abre modal/confirm?
-      confirmSelection();
-    }
-  });
+  // Remove horários que caem nas janelas busy (retornadas pelo Google Calendar)
+  function filterBusy(allHours, busy) {
+    if (!busy || !busy.length) return allHours.slice();
 
-  function confirmSelection(){
-    if(!selectedDate || !selectedTime) return;
-    // salva e segue para profissionais
-    localStorage.setItem('booking_date', selectedDate);
-    localStorage.setItem('booking_time', selectedTime);
-    // se quiser mostrar um modal, substitua pelas suas UI
-    if(confirm(`Confirmar ${selectedDate} às ${selectedTime}?`)){
-      location.href = 'profissionais.html';
-    }
+    const blocks = busy.map(b => ({
+      start: isoToMinutes(b.start),
+      end:   isoToMinutes(b.end)
+    }));
+
+    return allHours.filter(h => {
+      const m = hmToMinutes(h);
+      // remove se este horário cair dentro de qualquer janela [start, end)
+      return !blocks.some(b => m >= b.start && m < b.end);
+    });
   }
 
-  // nav meses (se tiver botões, chame estas)
-  // nextMonth() / prevMonth()
-  function nextMonth(){ current = new Date(current.getFullYear(), current.getMonth()+1, 1); renderCalendar(current); }
-  function prevMonth(){ current = new Date(current.getFullYear(), current.getMonth()-1, 1); renderCalendar(current); }
+  async function loadSlots(isoDate) {
+    try {
+      renderLoading();
 
-  // init
-  document.addEventListener('DOMContentLoaded', ()=>{
-    renderCalendar(current);
-    loadSlots(selectedDate);
-  });
+      // GET sem headers para não gerar preflight/CORS
+      const url = `${AVAIL_URL}?date=${encodeURIComponent(isoDate)}`;
+      const res = await fetch(url, { method: 'GET' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-  btnVoltar?.addEventListener('click', ()=> history.back());
+      const data = await res.json();
+      // O n8n pode te devolver já "livres"; se não, filtramos com o busy
+      const allHours = data.horarios || data.horariosLivres || [];
+      const freeHours = data.horariosLivres ? data.horariosLivres : filterBusy(allHours, data.busy);
+
+      renderSlots(freeHours);
+    } catch (err) {
+      console.error(err);
+      renderError(err.message);
+    }
+  }
 })();
-
-// exemplo de função para normalizar a data selecionada
-function formatDateToISO(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`; // sempre YYYY-MM-DD
-}
-
-// quando o usuário clicar no dia:
-calendar.on('select', (date) => {
-  const isoDate = formatDateToISO(date);
-  loadHorarios(isoDate); // chama teu fetch com isoDate
-});
-
