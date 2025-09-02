@@ -1,3 +1,4 @@
+// /js/profissionais.js
 (() => {
   const GRID = document.getElementById('profGrid');
   const BTN_CONTINUAR = document.getElementById('btn-continuar');
@@ -6,19 +7,14 @@
   const N8N_BASE =
     localStorage.getItem('n8n_base') ||
     'https://primary-odonto.up.railway.app/webhook/barber';
-
   const API = `${N8N_BASE}/professionals`;
 
-  // legenda da data/hora escolhida (só visual)
-  const iso = sessionStorage.getItem('booking.date') || '';
+  // legenda (opcional)
+  const iso  = sessionStorage.getItem('booking.date') || '';
   const time = sessionStorage.getItem('booking.time') || '';
   if (iso && time) {
     const d = new Date(iso);
-    const legenda = d.toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-    });
+    const legenda = d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
     const header = document.querySelector('.top .title');
     if (header) {
       const note = document.createElement('div');
@@ -31,8 +27,27 @@
 
   let selectedId = null;
 
+  // --- helper: extrai lista independente do formato vindo do n8n ---
+  function extractList(data) {
+    // Já é array direto?
+    if (Array.isArray(data)) return data.slice();
+
+    // Campo professionals como array?
+    if (Array.isArray(data?.professionals)) return data.professionals.slice();
+
+    // Campo professionals como objeto { "0": {...}, "1": {...} } ?
+    if (data?.professionals && typeof data.professionals === 'object') {
+      try { return Object.values(data.professionals); } catch {}
+    }
+
+    // Campo items como array?
+    if (Array.isArray(data?.items)) return data.items.slice();
+
+    return [];
+  }
+
   async function loadProfessionals() {
-    // Skeleton
+    // skeleton
     GRID.innerHTML = `
       <div class="card skeleton"></div>
       <div class="card skeleton"></div>
@@ -41,12 +56,7 @@
     `;
 
     try {
-      const params = {
-        date: iso || '',
-        time: time || '',
-        duration: 30,
-      };
-      // 👉 se não tem data/hora, mostre todos (inclui indisponíveis)
+      const params = { date: iso, time, duration: 30 };
       if (!params.date || !params.time) params.includeUnavailable = 1;
 
       const url = `${API}?${new URLSearchParams(params).toString()}`;
@@ -55,55 +65,34 @@
       const res = await fetch(url, { method: 'GET' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      // parse robusto
       const text = await res.text();
       let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = text;
-      }
+      try { data = JSON.parse(text); } catch { data = text; }
       console.log('[professionals] payload =', data);
 
-      // aceita { professionals: [...] } OU um array direto
-      const list =
-        (data && Array.isArray(data.professionals) && data.professionals) ||
-        (Array.isArray(data) && data) ||
-        (Array.isArray(data?.items) && data.items) ||
-        [];
+      let list = extractList(data);
+      console.log('[professionals] list (after extract) =', list, 'len=', list.length);
 
       if (!list.length) {
-        GRID.innerHTML =
-          '<p style="color:#6b7280">Nenhum profissional encontrado.</p>';
+        GRID.innerHTML = `<p style="color:#6b7280">Nenhum profissional encontrado.</p>`;
         BTN_CONTINUAR.disabled = true;
         return;
       }
 
-      GRID.innerHTML = list
-        .map(
-          (p) => `
-        <button class="card" data-id="${p.id}" aria-label="Selecionar ${p.name}">
-          <img src="${p.avatar || `https://i.pravatar.cc/160?u=${encodeURIComponent(
-            p.id || p.name || ''
-          )}`}" class="avatar" alt="${p.name || 'Profissional'}">
+      // Render de TODOS de uma vez (nunca sobrescrever dentro do loop!)
+      GRID.innerHTML = list.map(p => `
+        <button class="card" data-id="${p.id}" aria-label="Selecionar ${p.name || 'profissional'}">
+          <img src="${p.avatar || `https://i.pravatar.cc/160?u=${encodeURIComponent(p.id || p.name || '')}`}" class="avatar" alt="${p.name || 'Profissional'}">
           <div class="name">${p.name || 'Profissional'}</div>
-          ${
-            p.skills?.length
-              ? `<div class="skills">${p.skills.join(', ')}</div>`
-              : ''
-          }
-          <div class="badge ${p.available ? 'ok' : 'off'}">
-            ${p.available ? 'Disponível' : 'Indisponível'}
-          </div>
-        </button>`
-        )
-        .join('');
+          ${p.skills?.length ? `<div class="skills">${p.skills.join(', ')}</div>` : ''}
+          <div class="badge ${p.available ? 'ok' : 'off'}">${p.available ? 'Disponível' : 'Indisponível'}</div>
+        </button>
+      `).join('');
 
-      GRID.querySelectorAll('.card').forEach((card) => {
+      // listeners
+      GRID.querySelectorAll('.card').forEach(card => {
         card.addEventListener('click', () => {
-          GRID.querySelectorAll('.card.selected').forEach((c) =>
-            c.classList.remove('selected')
-          );
+          GRID.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
           card.classList.add('selected');
           selectedId = card.dataset.id;
           BTN_CONTINUAR.disabled = false;
@@ -111,12 +100,10 @@
         });
       });
 
-      // pré-seleciona se já havia um salvo
+      // pré-seleção
       const saved = sessionStorage.getItem('booking.professional_id');
-      if (saved) {
-        const el = GRID.querySelector(`.card[data-id="${CSS.escape(saved)}"]`);
-        if (el) el.click();
-      }
+      if (saved) GRID.querySelector(`.card[data-id="${CSS.escape(saved)}"]`)?.click();
+
     } catch (err) {
       console.error(err);
       GRID.innerHTML = `
@@ -134,21 +121,8 @@
   BTN_VOLTAR?.addEventListener('click', () => history.back());
   BTN_CONTINUAR?.addEventListener('click', () => {
     if (!selectedId) return;
-    // segue o funil → login/cadastro
     location.href = 'login.html';
   });
 
   loadProfessionals();
 })();
-
-/* Utils */
-function escapeHtml(str = '') {
-  return String(str)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
-
