@@ -1,4 +1,4 @@
-const N8N_BASE = localStorage.getItem('n8n_base') || 'https://your-n8n.example.com/webhook/barber';
+const N8N_BASE = localStorage.getItem('n8n_base') || 'https://primary-odonto.up.railway.app/webhook/barber';
 
 
 // carrega do n8n
@@ -199,4 +199,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadProfessionals();
 });
+
 
