@@ -3,32 +3,65 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Selecione o Profissional</title>
-
+  <title>Escolha um profissional</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Seu CSS desta página -->
-  <link rel="stylesheet" href="css/profissionais.css" />
+  <style>
+    :root{
+      --bg:#f7f8fb; --card:#fff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --primary:#111827;
+      --ok:#10b981; --off:#ef4444; --radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+
+    .page{max-width:980px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+    .top{padding:16px 14px 0}
+    .title{margin:0;font-weight:800;font-size:clamp(1.05rem,1rem + 1vw,1.5rem)}
+    .note{color:var(--muted);font-size:12px;margin-top:4px}
+
+    .grid{display:grid;gap:12px;padding:12px;
+      grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+    .card{
+      display:flex;flex-direction:column;align-items:center;gap:8px;
+      background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+      padding:14px; cursor:pointer; transition:box-shadow .15s ease, border-color .15s ease;
+    }
+    .card:hover{box-shadow:0 8px 24px rgba(0,0,0,.06)}
+    .card.selected{outline:2px solid var(--primary); outline-offset:2px}
+    .avatar{width:92px;height:92px;object-fit:cover;border-radius:999px;border:2px solid var(--border)}
+    .name{font-weight:800}
+    .skills{font-size:12px;color:var(--muted);text-align:center}
+    .badge{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--border)}
+    .badge.ok{background:#ecfdf5;color:#065f46;border-color:#d1fae5}
+    .badge.off{background:#fef2f2;color:#991b1b;border-color:#fee2e2}
+
+    .skeleton{min-height:150px;animation:pulse 1s infinite ease-in-out;background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 37%,#f3f4f6 63%);background-size:400% 100%}
+    @keyframes pulse{0%{background-position:100% 0}100%{background-position:0 0}}
+
+    .footer{margin-top:auto;padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:space-between}
+    .btn{border:1px solid var(--border);background:var(--card);padding:10px 14px;border-radius:999px;font-weight:700;cursor:pointer}
+    .btn[disabled]{opacity:.5;cursor:not-allowed}
+    .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+  </style>
 </head>
 <body>
   <main class="page">
     <header class="top">
       <h1 class="title">Escolha um profissional</h1>
-      <!-- A frase “Disponíveis para … às …” será inserida via JS logo abaixo do título -->
+      <div class="note" id="legend"></div>
     </header>
 
-    <!-- Grid de profissionais -->
-    <section class="grid" id="profGrid" aria-live="polite" aria-busy="true"></section>
+    <!-- onde os cards entram -->
+    <section class="grid" id="profGrid"></section>
 
     <footer class="footer">
-      <button class="btn btn-ghost" id="btn-voltar" type="button">← Voltar</button>
-      <button class="btn btn-primary" id="btn-continuar" type="button" disabled>Continuar →</button>
+      <button class="btn" id="btn-back">← Voltar</button>
+      <button class="btn btn-primary" id="btn-next" disabled>Continuar →</button>
     </footer>
   </main>
 
-  <!-- Script da tela -->
   <script src="js/profissionais.js"></script>
 </body>
 </html>
