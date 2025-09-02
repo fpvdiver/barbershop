@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const BTN_CONTINUAR = document.getElementById('btn-continuar');
   const BTN_VOLTAR = document.getElementById('btn-voltar');
 
-  const API = 'https://SEU_N8N/webhook/barber/professionals'; // troque pela sua URL
+  const API = 'https://primary-odonto.up.railway.app/webhook/barber/professionals'; // troque pela sua URL
 
   // só para deixar a frase “Disponíveis para ...”
   const iso = sessionStorage.getItem('booking.date');
@@ -199,5 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadProfessionals();
 });
+
 
 
