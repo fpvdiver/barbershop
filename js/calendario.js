@@ -1,79 +1,62 @@
-/* js/calendario.js */
-(() => {
-  // ================== CONFIG ==================
-  const AVAIL_URL = 'https://primary-odonto.up.railway.app/webhook/barber/availability'; // <-- ajuste aqui
+/* js/calendario.js — versão consolidada */
+
+// ================== CONFIG ==================
+const AVAIL_URL = 'https://primary-odonto.up.railway.app/webhook/barber/availability';
+
+// ================== HELPERS (globais) ==================
+function toISODateOnly(date) {
+  const d = new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+function formatDatePt(iso) {
+  // "terça-feira, 2 de setembro"
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+function hmToMinutes(hm) {
+  const [h, m] = hm.split(':').map(Number);
+  return h * 60 + m;
+}
+function isoToMinutes(iso) {
+  const d = new Date(iso);
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+// Expor para outros módulos (calendário)
+window.booking = window.booking || {};
+window.booking.helpers = { toISODateOnly, formatDatePt };
+
+// ================== SLOTS (horários) ==================
+(function initSlots() {
   const slotsEl   = document.getElementById('slots');
   const labelDia  = document.getElementById('label-dia');
   const btnVoltar = document.getElementById('btn-voltar');
 
-  // Data atual/selecionada (assuma que seu grid já define isso; se não, começa com hoje)
-  let selectedDate = toISODateOnly(new Date());
+  if (!slotsEl) return; // página sem slots
 
-  // Se o seu grid já grava a data na sessionStorage, respeite:
-  const stored = sessionStorage.getItem('booking.date');
-  if (stored) selectedDate = stored;
+  let selectedDate = sessionStorage.getItem('booking.date') || toISODateOnly(new Date());
+  labelDia && (labelDia.textContent = formatDatePt(selectedDate));
 
-  // Mostra label inicial e carrega slots
-  labelDia.textContent = formatDatePt(selectedDate);
-  loadSlots(selectedDate);
+  // API simples sem preflight pra evitar CORS
+  async function loadSlots(isoDate) {
+    try {
+      renderLoading();
+      const url = `${AVAIL_URL}?date=${encodeURIComponent(isoDate)}`;
+      const res = await fetch(url, { method: 'GET' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
 
-  // Se seu grid de calendário dispara eventos, conecte aqui:
-  // Exemplo: clique no dia do calendário (cada célula tem data-date="YYYY-MM-DD")
-  const calGrid = document.getElementById('calGrid');
-  if (calGrid) {
-    calGrid.addEventListener('click', (e) => {
-      const cell = e.target.closest('[data-date]');
-      if (!cell) return;
-      selectedDate = cell.dataset.date;          // "YYYY-MM-DD"
-      labelDia.textContent = formatDatePt(selectedDate);
-      sessionStorage.setItem('booking.date', selectedDate);
-      loadSlots(selectedDate);
-    });
-  }
-
-  // Voltar
-  btnVoltar?.addEventListener('click', () => history.back());
-
-  // ==== Helpers de data ====
-function toISODateOnly(date) {
-  // Retorna YYYY-MM-DD em UTC local
-  const d = new Date(date);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function formatDatePt(iso) {
-  // Retorna: terça-feira, 2 de setembro
-  const d = new Date(iso);
-  return d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
-}
-
-
-  // ================== FUNÇÕES ==================
-
-  function toISODateOnly(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
-
-  function formatDatePt(iso) {
-    const [y, m, d] = iso.split('-').map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString('pt-BR', {
-      weekday: 'long', day: 'numeric', month: 'long'
-    });
-  }
-
-  function hmToMinutes(hm) {
-    const [h, m] = hm.split(':').map(Number);
-    return h * 60 + m;
-  }
-  function isoToMinutes(iso) {
-    const d = new Date(iso);
-    return d.getHours() * 60 + d.getMinutes();
+      // n8n pode devolver já pronto como "horariosLivres", ou base + busy
+      const allHours = data.horarios || data.horariosLivres || [];
+      const free = data.horariosLivres ? data.horariosLivres : filterBusy(allHours, data.busy);
+      renderSlots(free);
+    } catch (err) {
+      console.error(err);
+      renderError(err.message);
+    }
   }
 
   function renderLoading() {
@@ -84,7 +67,6 @@ function formatDatePt(iso) {
       <div class="slot-skeleton"></div>
     `;
   }
-
   function renderError(msg) {
     slotsEl.innerHTML = `
       <div class="alert error">
@@ -95,7 +77,6 @@ function formatDatePt(iso) {
     `;
     document.getElementById('btnTry')?.addEventListener('click', () => loadSlots(selectedDate));
   }
-
   function renderEmpty() {
     slotsEl.innerHTML = `
       <div class="alert">
@@ -104,84 +85,71 @@ function formatDatePt(iso) {
       </div>
     `;
   }
-
   function renderSlots(hours) {
     if (!hours.length) return renderEmpty();
-
     slotsEl.innerHTML = hours.map(h => `
       <button class="slot" data-time="${h}" aria-label="Agendar às ${h}">${h}</button>
     `).join('');
 
-    // clique para selecionar
     slotsEl.querySelectorAll('.slot').forEach(btn => {
       btn.addEventListener('click', () => {
-        // marca visualmente
         slotsEl.querySelectorAll('.slot.selected').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
 
         const time = btn.dataset.time;
-        // guarda e redireciona (ou abre modal de confirmação, se preferir)
         sessionStorage.setItem('booking.date', selectedDate);
         sessionStorage.setItem('booking.time', time);
 
-        // Se quiser pedir um OK antes:
         if (confirm(`Confirmar ${formatDatePt(selectedDate)} às ${time}?`)) {
-          location.href = 'profissionais.html'; // próximo passo do funil
+          location.href = 'profissionais.html';
         }
       });
     });
   }
 
-  // Remove horários que caem nas janelas busy (retornadas pelo Google Calendar)
   function filterBusy(allHours, busy) {
     if (!busy || !busy.length) return allHours.slice();
-
-    const blocks = busy.map(b => ({
-      start: isoToMinutes(b.start),
-      end:   isoToMinutes(b.end)
-    }));
-
+    const blocks = busy.map(b => ({ start: isoToMinutes(b.start), end: isoToMinutes(b.end) }));
     return allHours.filter(h => {
       const m = hmToMinutes(h);
-      // remove se este horário cair dentro de qualquer janela [start, end)
       return !blocks.some(b => m >= b.start && m < b.end);
     });
   }
 
-  async function loadSlots(isoDate) {
-    try {
-      renderLoading();
+  // Troca de data pelo calendário (integração)
+  const calGrid = document.getElementById('calGrid');
+  calGrid?.addEventListener('click', (e) => {
+    const cell = e.target.closest('[data-date]');
+    if (!cell || cell.classList.contains('disabled')) return;
+    selectedDate = cell.dataset.date;
+    sessionStorage.setItem('booking.date', selectedDate);
+    labelDia && (labelDia.textContent = formatDatePt(selectedDate));
+    loadSlots(selectedDate);
+  });
 
-      // GET sem headers para não gerar preflight/CORS
-      const url = `${AVAIL_URL}?date=${encodeURIComponent(isoDate)}`;
-      const res = await fetch(url, { method: 'GET' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  btnVoltar?.addEventListener('click', () => history.back());
 
-      const data = await res.json();
-      // O n8n pode te devolver já "livres"; se não, filtramos com o busy
-      const allHours = data.horarios || data.horariosLivres || [];
-      const freeHours = data.horariosLivres ? data.horariosLivres : filterBusy(allHours, data.busy);
+  // carregar já ao abrir
+  loadSlots(selectedDate);
 
-      renderSlots(freeHours);
-    } catch (err) {
-      console.error(err);
-      renderError(err.message);
-    }
-  }
+  // Expor para o calendário chamar quando ele trocar o mês/dia
+  window.booking.loadSlots = loadSlots;
 })();
 
-// ====== CALENDÁRIO (mês) ======
+// ================== CALENDÁRIO (mês) ==================
 (function initCalendar() {
   const calGrid  = document.getElementById('calGrid');
+  if (!calGrid) return; // página sem calendário
+
   const calPrev  = document.getElementById('calPrev');
   const calNext  = document.getElementById('calNext');
   const calLabel = document.getElementById('calMonthLabel');
 
-  if (!calGrid) return;
+  const { toISODateOnly, formatDatePt } = window.booking.helpers;
+  const loadSlots = window.booking.loadSlots;
 
-  // Estado de visualização (mês/ano sendo exibidos)
   let selectedISO = sessionStorage.getItem('booking.date') || toISODateOnly(new Date());
-  let view = isoToYM(selectedISO); // {y,m}
+  let view = isoToYM(selectedISO); // { y, m }
 
   renderCalendar(view.y, view.m, selectedISO);
 
@@ -195,74 +163,63 @@ function formatDatePt(iso) {
   });
 
   function isoToYM(iso) {
-    const [y,m] = iso.split('-').map(Number);
+    const [y, m] = iso.split('-').map(Number);
     return { y, m };
   }
   function stepMonth(y, m, delta) {
-    const d = new Date(y, m-1 + delta, 1);
-    return { y: d.getFullYear(), m: d.getMonth()+1 };
+    const d = new Date(y, m - 1 + delta, 1);
+    return { y: d.getFullYear(), m: d.getMonth() + 1 };
   }
-  function daysInMonth(y, m) {
-    return new Date(y, m, 0).getDate();
-  }
-  function firstWeekdayIndex(y, m) {
-    // domingo=0 … sábado=6
-    return new Date(y, m-1, 1).getDay();
-  }
-  function pad2(n){ return String(n).padStart(2,'0'); }
-  function ymd(y,m,d){ return `${y}-${pad2(m)}-${pad2(d)}`; }
+  function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+  function firstWeekdayIndex(y, m) { return new Date(y, m - 1, 1).getDay(); } // 0-dom ... 6-sáb
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function ymd(y, m, d) { return `${y}-${pad2(m)}-${pad2(d)}`; }
 
   function renderCalendar(y, m, selectedIso) {
-    // Label do mês
-    const label = new Date(y, m-1, 1).toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
-    calLabel.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+    const label = new Date(y, m - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    if (calLabel) calLabel.textContent = label.charAt(0).toUpperCase() + label.slice(1);
 
     calGrid.innerHTML = '';
     const todayIso = toISODateOnly(new Date());
     const total = daysInMonth(y, m);
-    const startIdx = firstWeekdayIndex(y, m); // 0..6 domingo..sábado
+    const startIdx = firstWeekdayIndex(y, m);
 
-    // Blanks antes do dia 1
-    for (let i=0; i<startIdx; i++) {
+    // "blanks"
+    for (let i = 0; i < startIdx; i++) {
       const b = document.createElement('div');
       b.className = 'cal-cell muted';
       b.setAttribute('aria-hidden', 'true');
       calGrid.appendChild(b);
     }
 
-    // Dias do mês
-    for (let d=1; d<=total; d++) {
+    for (let d = 1; d <= total; d++) {
       const iso = ymd(y, m, d);
-      const cell = document.createElement('button');
-      cell.className = 'cal-cell';
-      cell.textContent = d;
+      const btn = document.createElement('button');
+      btn.className = 'cal-cell';
+      btn.textContent = d;
 
-      // Finais de semana (domingo=0, sábado=6)
-      const weekday = new Date(y, m-1, d).getDay();
-      if (weekday===0 || weekday===6) cell.classList.add('weekend');
+      const weekday = new Date(y, m - 1, d).getDay();
+      if (weekday === 0 || weekday === 6) btn.classList.add('weekend');
+      if (iso === todayIso) btn.classList.add('today');
+      if (iso === selectedIso) btn.classList.add('selected');
+      if (iso < todayIso) btn.classList.add('disabled');
 
-      if (iso === todayIso) cell.classList.add('today');
-      if (iso === selectedIso) cell.classList.add('selected');
+      btn.dataset.date = iso;
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('disabled')) return;
+        calGrid.querySelectorAll('.cal-cell.selected').forEach(el => el.classList.remove('selected'));
+        btn.classList.add('selected');
 
-      // Desabilita datas passadas
-      if (iso < todayIso) cell.classList.add('disabled');
-
-      cell.dataset.date = iso;
-      cell.addEventListener('click', () => {
-        // Atualiza seleção visual
-        calGrid.querySelectorAll('.cal-cell.selected').forEach(el=>el.classList.remove('selected'));
-        cell.classList.add('selected');
-
-        // Persiste, atualiza label e recarrega slots
         selectedISO = iso;
         sessionStorage.setItem('booking.date', iso);
         const labelDia = document.getElementById('label-dia');
-        if (labelDia) labelDia.textContent = formatDatePt(iso);
-        loadSlots(iso);
+        labelDia && (labelDia.textContent = formatDatePt(iso));
+
+        // recarrega horários
+        loadSlots && loadSlots(iso);
       });
 
-      calGrid.appendChild(cell);
+      calGrid.appendChild(btn);
     }
   }
 })();
-
