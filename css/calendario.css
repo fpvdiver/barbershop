@@ -55,4 +55,32 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui
 .btn-ghost{background:#fff;color:var(--text)}
 .btn[disabled]{opacity:.5;pointer-events:none}
 
+
 .site-domain{text-align:center;color:#9ca3af;font-size:12px;margin:18px 0}
+
+/* slots */
+.slots { display:grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap:8px; }
+@media (max-width:420px){ .slots { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+.slot {
+  border:1px solid var(--border,#e5e7eb);
+  background:#eaffea;
+  border-radius:12px;
+  padding:10px 8px;
+  font-weight:700;
+}
+.slot.selected { outline:2px solid #16a34a; background:#dcfce7; }
+
+/* skeleton */
+.slot-skeleton {
+  height:40px; border-radius:12px;
+  background: linear-gradient(90deg,#eee,#f7f7f7,#eee);
+  animation: pulse 1s infinite linear;
+}
+@keyframes pulse {
+  0% { background-position: -100px 0; }
+  100% { background-position: 200px 0; }
+}
+
+/* alerts */
+.alert { padding:12px; border-radius:12px; border:1px solid var(--border,#e5e7eb); background:#fff; }
+.alert.error { border-color:#fecaca; background:#fff1f2; }
