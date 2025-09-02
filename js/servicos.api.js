@@ -1,6 +1,6 @@
 // ========= CONFIG API =========
 // Endpoint do Railway (n8n / backend) que orquestra a leitura de serviços
-const API_URL = 'https://primary-odonto.up.railway.app/webhook/baber/procedures';
+const API_URL = 'https://primary-odonto.up.railway.app/webhook/barber/procedures';
 
 // Caso o endpoint exija um token, inclua aqui (ou deixe vazio)
 const API_TOKEN = ''; // ex.: 'Bearer xxxxx' (se houver)
