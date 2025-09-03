@@ -8,12 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#fff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --accent:#111;
-      --radius:14px; --chip:#f3f4f6;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:var(--text)}
+    :root{--bg:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--accent:#111;--radius:14px;--chip:#f3f4f6}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:var(--text)}
     .wrap{max-width:460px;margin:0 auto;padding:20px}
     h1{margin:0 0 8px;font-size:20px;font-weight:800}
     .muted{color:var(--muted);font-size:13px}
@@ -29,15 +25,15 @@
     .btn{padding:12px 16px;border-radius:999px;border:1px solid var(--border);font-weight:700;cursor:pointer}
     .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
     .footer{margin-top:16px;display:flex;gap:10px;justify-content:space-between}
-    .error{background:#fee2e2;border:1px solid #ef4444;color:#991b1b;padding:8px;border-radius:10px;font-size:13px;margin-bottom:8px}
+    .error{background:#fee2e2;border:1px solid #ef4444;color:#991b1b;padding:8px;border-radius:10px;font-size:13px;margin-bottom:8px;display:none}
   </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Revise e confirme</h1>
-  <div class="muted" id="hint">Conferindo tudo antes de confirmar seu agendamento.</div>
+  <div class="muted">Conferindo tudo antes de confirmar seu agendamento.</div>
 
-  <div id="alert" class="error" style="display:none"></div>
+  <div id="alert" class="error"></div>
 
   <div class="card">
     <div class="row"><div class="label">Profissional</div><div id="rProf">—</div></div>
@@ -67,217 +63,124 @@
   </div>
 </div>
 
+<script src="js/booking-helpers.js"></script>
 <script>
-  // ========= CONFIG =========
-  // Ajuste o base se necessário:
+  // ===== CONFIG =====
   const N8N_BASE   = localStorage.getItem('n8n_base') || 'https://primary-odonto.up.railway.app/webhook/barber';
-  const QUOTE_URL  = `${N8N_BASE}/quote`;           // GET
-  const CREATE_URL = `${N8N_BASE}/booking/create`;  // POST
+  const QUOTE_URL  = `${N8N_BASE}/quote`;          // GET
+  const CREATE_URL = `${N8N_BASE}/booking/create`; // POST
+  const TOKEN      = localStorage.getItem('sb_access_token') || localStorage.getItem('access_token') || '';
 
-  // Token do Supabase (se o cliente logou)
-  const ACCESS_TOKEN = localStorage.getItem('sb_access_token')
-                     || localStorage.getItem('access_token') || '';
-
-  // ========= ELEMENTOS =========
-  const alertBox = document.getElementById('alert');
+  // ===== UI =====
+  const alertBox   = document.getElementById('alert');
   const servicesEl = document.getElementById('services');
+  const rProf = rById('rProf'), rDate = rById('rDate'), rTime = rById('rTime');
+  const rDuration = rById('rDuration'), rSubtotal = rById('rSubtotal'), rDeposit = rById('rDeposit'), rTotal = rById('rTotal');
+  const rName = rById('rName'), rPhone = rById('rPhone'), rEmail = rById('rEmail');
+  const btnBack = rById('btnBack'), btnConfirm = rById('btnConfirm');
+  function rById(id){ return document.getElementById(id); }
+  const BRL = (c=0)=> (Number(c)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const fmtDate = (iso)=> iso? (()=>{const [y,m,d]=iso.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})})() : '—';
+  const showError=(m)=>{alertBox.textContent=m;alertBox.style.display='block'}; const hideError=()=>{alertBox.style.display='none'};
 
-  const rProf = document.getElementById('rProf');
-  const rDate = document.getElementById('rDate');
-  const rTime = document.getElementById('rTime');
-  const rDuration = document.getElementById('rDuration');
-  const rSubtotal = document.getElementById('rSubtotal');
-  const rDeposit  = document.getElementById('rDeposit');
-  const rTotal    = document.getElementById('rTotal');
+  // ===== STATE =====
+  const servicesIds = Booking.getServices();
+  const profId      = Booking.getProfessional();
+  const { date, time } = Booking.getDateTime();
+  const profile     = Booking.getProfile();
 
-  const rName  = document.getElementById('rName');
-  const rPhone = document.getElementById('rPhone');
-  const rEmail = document.getElementById('rEmail');
-
-  const btnBack    = document.getElementById('btnBack');
-  const btnConfirm = document.getElementById('btnConfirm');
-
-  // ========= HELPERS =========
-  const BRL = (cents)=> (Number(cents||0)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-  const fmtDate = (iso)=> {
-    if(!iso) return '—';
-    const [y,m,d]=iso.split('-').map(Number);
-    return new Date(y,m-1,d).toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
-  };
-  function showError(msg){ alertBox.style.display='block'; alertBox.textContent = msg; }
-  function hideError(){ alertBox.style.display='none'; }
-
-  // ========= STATE (do funil) =========
-  const servicesIds = JSON.parse(localStorage.getItem('booking_services') || '[]'); // ['uuid','uuid2']
-  const profId      = localStorage.getItem('booking_barber') || localStorage.getItem('booking.professional_id') || '';
-
-  // Suporta duas formas de salvar data/hora:
-  const dtObj = JSON.parse(localStorage.getItem('booking_datetime') || '{}');
-  const dateFromSplit = localStorage.getItem('booking.date') || '';
-  const timeFromSplit = localStorage.getItem('booking.time') || '';
-  const dateSel = dtObj.date || dateFromSplit || '';
-  const timeSel = dtObj.time || timeFromSplit || '';
-
-  const profile = JSON.parse(localStorage.getItem('booking_profile') || '{}'); // {nome,sobrenome,telefone,email}
-
-  // Pré-preenche contato e data/hora
+  // preenche contato & data/hora
   rName.textContent  = [profile.nome, profile.sobrenome].filter(Boolean).join(' ') || '—';
   rPhone.textContent = profile.telefone || '—';
   rEmail.textContent = profile.email || '—';
-  rDate.textContent  = fmtDate(dateSel);
-  rTime.textContent  = timeSel || '—';
+  rDate.textContent  = fmtDate(date);
+  rTime.textContent  = time || '—';
 
-  // ========= PREP =========
-  function authHeaders(h={}){
-    const out = {...h};
-    if (ACCESS_TOKEN) out['Authorization'] = `Bearer ${ACCESS_TOKEN}`;
-    return out;
+  // debug (remover depois se quiser)
+  Booking.mountDebug('.wrap');
+
+  // valida antes de chamar o n8n
+  function validate() {
+    if (!Array.isArray(servicesIds) || servicesIds.length===0) return 'Nenhum serviço selecionado.';
+    if (!profId)  return 'Profissional não selecionado.';
+    if (!date)    return 'Data não selecionada.';
+    if (!time)    return 'Hora não selecionada.';
+    return '';
   }
 
-  function normalizeQuote(data){
-    // Aceita dois formatos:
-    // A) { services: [{id,name,price_cents,duration_min}...], totals: {subtotal_cents, signal_cents, total_duration_min}, professional_id?, date?, time? }
-    // B) { items: [...], total_cents, deposit_cents, total_duration_min, professional: {id,name,avatar}, date?, time? }
-    let items = [];
-    let subtotal = 0, deposit = 0, duration = 0, profName = '—';
-
-    if (Array.isArray(data.services)) {
-      items = data.services.map(s => ({
-        id: s.id,
-        name: s.name,
-        price_cents: Number(s.price_cents||0),
-        duration_min: Number(s.duration_min||0)
-      }));
-      subtotal = Number(data.totals?.subtotal_cents || 0);
-      deposit  = Number(data.totals?.signal_cents   || Math.ceil(subtotal*0.3));
-      duration = Number(data.totals?.total_duration_min || 0);
-      profName = data.professional?.name || data.professional_name || data.professional_id || '—';
-    } else {
-      items = (data.items||[]).map(s => ({
-        id: s.id, name: s.name,
-        price_cents: Number(s.price_cents||0),
-        duration_min: Number(s.duration_min||0)
-      }));
-      subtotal = Number(data.total_cents || 0);
-      deposit  = Number(data.deposit_cents || Math.ceil(subtotal*0.3));
-      duration = Number(data.total_duration_min || 0);
-      profName = data.professional?.name || data.professional_name || data.professional_id || '—';
-    }
-
-    const out = {
-      professional_name: profName,
-      items,
-      total_cents: subtotal,
-      deposit_cents: deposit,
-      total_duration_min: duration,
-      date: data.date || dateSel,
-      time: data.time || timeSel
-    };
-    return out;
-  }
-
-  // ========= LOAD QUOTE =========
   async function loadQuote(){
     try{
+      const v = validate(); if (v) throw new Error(v);
       hideError();
       servicesEl.innerHTML = `<div class="muted">Carregando orçamento…</div>`;
 
-      if (!servicesIds.length) throw new Error('Nenhum serviço selecionado.');
-      if (!profId) throw new Error('Profissional não selecionado.');
-      if (!dateSel || !timeSel) throw new Error('Data e hora não selecionadas.');
-
-      const qs = new URLSearchParams({
-        services: servicesIds.join(','),
-        professional_id: profId,
-        date: dateSel,
-        time: timeSel
-      });
-
-      const res = await fetch(`${QUOTE_URL}?${qs.toString()}`, { headers: authHeaders() });
+      const qs = new URLSearchParams({ services: servicesIds.join(','), professional_id: profId, date, time });
+      const headers = {}; if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+      const res = await fetch(`${QUOTE_URL}?${qs.toString()}`, { headers });
       if(!res.ok) throw new Error(`Erro ao orçar (HTTP ${res.status})`);
       const data = await res.json();
 
-      const q = normalizeQuote(data);
+      // normalização mínima
+      const prof = data.professional || data.profissional || {};
+      const items = Array.isArray(data.items) ? data.items : (data.servicos || []);
+      const total = data.total_cents ?? data.total ?? 0;
+      const dur   = data.total_duration_min ?? data.duracao_total ?? 0;
+      const dep   = data.deposit_cents ?? Math.round(total*0.3);
 
-      rProf.textContent     = q.professional_name || '—';
-      rDuration.textContent = `${q.total_duration_min || 0} min`;
-      rSubtotal.textContent = BRL(q.total_cents || 0);
-      rDeposit.textContent  = BRL(q.deposit_cents || 0);
-      rTotal.textContent    = BRL(q.total_cents || 0);
+      rProf.textContent     = prof.name || prof.display_name || '—';
+      rDuration.textContent = `${dur} min`;
+      rSubtotal.textContent = BRL(total);
+      rDeposit.textContent  = BRL(dep);
+      rTotal.textContent    = BRL(total);
 
-      servicesEl.innerHTML = q.items.map(it => `
-        <div class="item">
-          <div>
-            <div class="i-title">${it.name||'Serviço'}</div>
-            <div class="i-sub">${it.duration_min||0} min</div>
-          </div>
-          <div class="i-title">${BRL(it.price_cents||0)}</div>
-        </div>
-      `).join('');
+      servicesEl.innerHTML = items.length
+        ? items.map(s => `
+            <div class="item">
+              <div>
+                <div class="i-title">${s.name || s.nome || 'Serviço'}</div>
+                <div class="i-sub">${s.duration_min ?? s.duracao_min ?? 0} min</div>
+              </div>
+              <div class="i-title">${BRL(s.price_cents ?? s.preco_cents ?? 0)}</div>
+            </div>
+          `).join('')
+        : `<div class="muted">Nenhum serviço.</div>`;
 
-      // snapshot do orçamento para o create
-      sessionStorage.setItem('booking_quote', JSON.stringify(q));
-
-    }catch(err){
-      console.error(err);
-      showError(err.message || 'Falha ao carregar orçamento');
-      servicesEl.innerHTML = '';
+      sessionStorage.setItem('booking_quote', JSON.stringify({ professional: prof, items, total_cents: total, total_duration_min: dur, deposit_cents: dep }));
+    } catch (e) {
+      console.error(e); showError(e.message || 'Falha ao carregar orçamento'); servicesEl.innerHTML='';
     }
   }
 
-  // ========= CONFIRMAR =========
-  btnConfirm.addEventListener('click', async ()=>{
+  btnConfirm.addEventListener('click', async () => {
     try{
-      hideError();
-      btnConfirm.disabled = true;
-      btnConfirm.textContent = 'Confirmando…';
+      const v = validate(); if (v) throw new Error(v);
+      hideError(); btnConfirm.disabled=true; btnConfirm.textContent='Confirmando…';
 
       const quote = JSON.parse(sessionStorage.getItem('booking_quote') || '{}');
       const payload = {
         professional_id: profId,
         services: servicesIds,
-        date: dateSel,
-        time: timeSel,
-        contact: {
-          name: [profile.nome, profile.sobrenome].filter(Boolean).join(' ') || '',
-          phone: profile.telefone || '',
-          email: profile.email || ''
-        },
+        date, time,
+        contact: { name: [profile.nome, profile.sobrenome].filter(Boolean).join(' '), phone: profile.telefone || '', email: profile.email || '' },
         quote
       };
 
-      const res = await fetch(CREATE_URL, {
-        method: 'POST',
-        headers: authHeaders({ 'Content-Type':'application/json' }),
-        body: JSON.stringify(payload)
-      });
+      const headers = { 'Content-Type':'application/json' }; if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+      const res = await fetch(CREATE_URL, { method:'POST', headers, body: JSON.stringify(payload) });
       const data = await res.json();
-
-      if(!res.ok || data.ok === false){
-        throw new Error(data.message || `Falha ao criar agendamento (HTTP ${res.status})`);
-      }
+      if(!res.ok || data.ok === false) throw new Error(data.message || `Falha ao criar agendamento (HTTP ${res.status})`);
 
       alert('Agendamento confirmado com sucesso!');
-      console.log('BOOKING CREATED:', data);
-
-      if (data.payment?.qr_code_url) {
-        window.open(data.payment.qr_code_url, '_blank');
-      } else {
-        location.href = 'index.html';
-      }
-
-    }catch(err){
-      console.error(err);
-      showError(err.message || 'Erro ao confirmar o agendamento');
-    }finally{
-      btnConfirm.disabled = false;
-      btnConfirm.textContent = 'Confirmar agendamento';
+      if (data.payment?.qr_code_url) window.open(data.payment.qr_code_url, '_blank');
+      location.href = 'index.html';
+    } catch(e){
+      console.error(e); showError(e.message || 'Erro ao confirmar o agendamento');
+    } finally {
+      btnConfirm.disabled=false; btnConfirm.textContent='Confirmar agendamento';
     }
   });
 
-  document.getElementById('btnBack').addEventListener('click', ()=> history.back());
-
-  // start
+  btnBack.addEventListener('click', ()=> history.back());
   loadQuote();
 </script>
 </body>
