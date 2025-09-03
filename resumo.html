@@ -8,8 +8,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root{ --bg:#fff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --accent:#111; --radius:14px; --chip:#f3f4f6; --ok:#10b981; --warn:#f59e0b;}
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:var(--text)}
+    :root{
+      --bg:#fff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --accent:#111;
+      --radius:14px; --chip:#f3f4f6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:var(--text)}
     .wrap{max-width:460px;margin:0 auto;padding:20px}
     h1{margin:0 0 8px;font-size:20px;font-weight:800}
     .muted{color:var(--muted);font-size:13px}
@@ -21,13 +25,11 @@
     .item{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:12px;padding:10px}
     .i-title{font-weight:700;font-size:14px}
     .i-sub{color:var(--muted);font-size:12px;margin-top:2px}
-    .chip{background:var(--chip);border:1px solid var(--border);padding:2px 8px;border-radius:999px;font-size:12px}
     .total{font-weight:800}
     .btn{padding:12px 16px;border-radius:999px;border:1px solid var(--border);font-weight:700;cursor:pointer}
     .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
     .footer{margin-top:16px;display:flex;gap:10px;justify-content:space-between}
     .error{background:#fee2e2;border:1px solid #ef4444;color:#991b1b;padding:8px;border-radius:10px;font-size:13px;margin-bottom:8px}
-    .ok{color:var(--ok);font-weight:700}
   </style>
 </head>
 <body>
@@ -66,16 +68,18 @@
 </div>
 
 <script>
-  // ====== CONFIG ======
-  const N8N_BASE  = localStorage.getItem('n8n_base') || 'https://primary-odonto.up.railway.app/webhook/barber';
-  const QUOTE_URL = `${N8N_BASE}/quote`;            // GET ?services=1,2&professional_id=...&date=YYYY-MM-DD&time=HH:MM
-  const CREATE_URL= `${N8N_BASE}/booking/create`;   // POST JSON
+  // ========= CONFIG =========
+  // Ajuste o base se necessário:
+  const N8N_BASE   = localStorage.getItem('n8n_base') || 'https://primary-odonto.up.railway.app/webhook/barber';
+  const QUOTE_URL  = `${N8N_BASE}/quote`;           // GET
+  const CREATE_URL = `${N8N_BASE}/booking/create`;  // POST
 
-  // Tokens (se login já foi feito)
-  const ACCESS_TOKEN = localStorage.getItem('sb_access_token') || localStorage.getItem('access_token') || '';
+  // Token do Supabase (se o cliente logou)
+  const ACCESS_TOKEN = localStorage.getItem('sb_access_token')
+                     || localStorage.getItem('access_token') || '';
 
-  // ====== ELEMENTOS ======
-  const alertBox   = document.getElementById('alert');
+  // ========= ELEMENTOS =========
+  const alertBox = document.getElementById('alert');
   const servicesEl = document.getElementById('services');
 
   const rProf = document.getElementById('rProf');
@@ -93,68 +97,115 @@
   const btnBack    = document.getElementById('btnBack');
   const btnConfirm = document.getElementById('btnConfirm');
 
-  // ====== HELPERS ======
+  // ========= HELPERS =========
   const BRL = (cents)=> (Number(cents||0)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
   const fmtDate = (iso)=> {
     if(!iso) return '—';
     const [y,m,d]=iso.split('-').map(Number);
     return new Date(y,m-1,d).toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
   };
-
-  function showError(msg){
-    alertBox.style.display='block';
-    alertBox.textContent = msg;
-  }
+  function showError(msg){ alertBox.style.display='block'; alertBox.textContent = msg; }
   function hideError(){ alertBox.style.display='none'; }
 
-  // ====== STATE (carregado do funil) ======
-  const servicesIds = JSON.parse(localStorage.getItem('booking_services') || '[]');    // array de IDs
-  const profId      = localStorage.getItem('booking_barber') || '';
-  const datetime    = JSON.parse(localStorage.getItem('booking_datetime') || '{}');    // {date,time}
-  const profile     = JSON.parse(localStorage.getItem('booking_profile')  || '{}');    // {nome,sobrenome,telefone,email}
+  // ========= STATE (do funil) =========
+  const servicesIds = JSON.parse(localStorage.getItem('booking_services') || '[]'); // ['uuid','uuid2']
+  const profId      = localStorage.getItem('booking_barber') || localStorage.getItem('booking.professional_id') || '';
 
-  // pré-preenche contato
+  // Suporta duas formas de salvar data/hora:
+  const dtObj = JSON.parse(localStorage.getItem('booking_datetime') || '{}');
+  const dateFromSplit = localStorage.getItem('booking.date') || '';
+  const timeFromSplit = localStorage.getItem('booking.time') || '';
+  const dateSel = dtObj.date || dateFromSplit || '';
+  const timeSel = dtObj.time || timeFromSplit || '';
+
+  const profile = JSON.parse(localStorage.getItem('booking_profile') || '{}'); // {nome,sobrenome,telefone,email}
+
+  // Pré-preenche contato e data/hora
   rName.textContent  = [profile.nome, profile.sobrenome].filter(Boolean).join(' ') || '—';
   rPhone.textContent = profile.telefone || '—';
   rEmail.textContent = profile.email || '—';
+  rDate.textContent  = fmtDate(dateSel);
+  rTime.textContent  = timeSel || '—';
 
-  rDate.textContent = fmtDate(datetime.date||'');
-  rTime.textContent = (datetime.time||'—');
+  // ========= PREP =========
+  function authHeaders(h={}){
+    const out = {...h};
+    if (ACCESS_TOKEN) out['Authorization'] = `Bearer ${ACCESS_TOKEN}`;
+    return out;
+  }
 
-  // ====== FETCH QUOTE ======
+  function normalizeQuote(data){
+    // Aceita dois formatos:
+    // A) { services: [{id,name,price_cents,duration_min}...], totals: {subtotal_cents, signal_cents, total_duration_min}, professional_id?, date?, time? }
+    // B) { items: [...], total_cents, deposit_cents, total_duration_min, professional: {id,name,avatar}, date?, time? }
+    let items = [];
+    let subtotal = 0, deposit = 0, duration = 0, profName = '—';
+
+    if (Array.isArray(data.services)) {
+      items = data.services.map(s => ({
+        id: s.id,
+        name: s.name,
+        price_cents: Number(s.price_cents||0),
+        duration_min: Number(s.duration_min||0)
+      }));
+      subtotal = Number(data.totals?.subtotal_cents || 0);
+      deposit  = Number(data.totals?.signal_cents   || Math.ceil(subtotal*0.3));
+      duration = Number(data.totals?.total_duration_min || 0);
+      profName = data.professional?.name || data.professional_name || data.professional_id || '—';
+    } else {
+      items = (data.items||[]).map(s => ({
+        id: s.id, name: s.name,
+        price_cents: Number(s.price_cents||0),
+        duration_min: Number(s.duration_min||0)
+      }));
+      subtotal = Number(data.total_cents || 0);
+      deposit  = Number(data.deposit_cents || Math.ceil(subtotal*0.3));
+      duration = Number(data.total_duration_min || 0);
+      profName = data.professional?.name || data.professional_name || data.professional_id || '—';
+    }
+
+    const out = {
+      professional_name: profName,
+      items,
+      total_cents: subtotal,
+      deposit_cents: deposit,
+      total_duration_min: duration,
+      date: data.date || dateSel,
+      time: data.time || timeSel
+    };
+    return out;
+  }
+
+  // ========= LOAD QUOTE =========
   async function loadQuote(){
     try{
       hideError();
       servicesEl.innerHTML = `<div class="muted">Carregando orçamento…</div>`;
 
+      if (!servicesIds.length) throw new Error('Nenhum serviço selecionado.');
+      if (!profId) throw new Error('Profissional não selecionado.');
+      if (!dateSel || !timeSel) throw new Error('Data e hora não selecionadas.');
+
       const qs = new URLSearchParams({
         services: servicesIds.join(','),
-        professional_id: profId || '',
-        date: datetime.date || '',
-        time: datetime.time || '',
+        professional_id: profId,
+        date: dateSel,
+        time: timeSel
       });
 
-      const headers = {};
-      if (ACCESS_TOKEN) headers['Authorization'] = `Bearer ${ACCESS_TOKEN}`;
-
-      const res = await fetch(`${QUOTE_URL}?${qs.toString()}`, { headers });
+      const res = await fetch(`${QUOTE_URL}?${qs.toString()}`, { headers: authHeaders() });
       if(!res.ok) throw new Error(`Erro ao orçar (HTTP ${res.status})`);
       const data = await res.json();
 
-      // Esperado do n8n:
-      // {
-      //   professional: { id, name, avatar },
-      //   items: [{ id, name, price_cents, duration_min }...],
-      //   total_cents, total_duration_min, deposit_cents
-      // }
-      rProf.textContent    = (data.professional && data.professional.name) || '—';
-      rDuration.textContent= `${data.total_duration_min || 0} min`;
-      rSubtotal.textContent= BRL(data.total_cents || 0);
-      rDeposit.textContent = BRL(data.deposit_cents || Math.round((data.total_cents||0)*0.3));
-      rTotal.textContent   = BRL(data.total_cents || 0);
+      const q = normalizeQuote(data);
 
-      // lista de serviços
-      servicesEl.innerHTML = (data.items||[]).map(it => `
+      rProf.textContent     = q.professional_name || '—';
+      rDuration.textContent = `${q.total_duration_min || 0} min`;
+      rSubtotal.textContent = BRL(q.total_cents || 0);
+      rDeposit.textContent  = BRL(q.deposit_cents || 0);
+      rTotal.textContent    = BRL(q.total_cents || 0);
+
+      servicesEl.innerHTML = q.items.map(it => `
         <div class="item">
           <div>
             <div class="i-title">${it.name||'Serviço'}</div>
@@ -162,10 +213,10 @@
           </div>
           <div class="i-title">${BRL(it.price_cents||0)}</div>
         </div>
-      `).join('') || `<div class="muted">Nenhum serviço.</div>`;
+      `).join('');
 
-      // Guardar um snapshot do orçamento para enviar no create
-      sessionStorage.setItem('booking_quote', JSON.stringify(data));
+      // snapshot do orçamento para o create
+      sessionStorage.setItem('booking_quote', JSON.stringify(q));
 
     }catch(err){
       console.error(err);
@@ -174,7 +225,7 @@
     }
   }
 
-  // ====== CONFIRMAR ======
+  // ========= CONFIRMAR =========
   btnConfirm.addEventListener('click', async ()=>{
     try{
       hideError();
@@ -182,44 +233,36 @@
       btnConfirm.textContent = 'Confirmando…';
 
       const quote = JSON.parse(sessionStorage.getItem('booking_quote') || '{}');
-
       const payload = {
         professional_id: profId,
-        services: servicesIds,               // ids
-        date: datetime.date,
-        time: datetime.time,
-        // opcional: dados do perfil (se ainda não logado, o n8n pode criar lead/cliente)
+        services: servicesIds,
+        date: dateSel,
+        time: timeSel,
         contact: {
           name: [profile.nome, profile.sobrenome].filter(Boolean).join(' ') || '',
           phone: profile.telefone || '',
           email: profile.email || ''
         },
-        // mandar o resumo para o n8n persistir sem recalcular se preferir:
         quote
       };
 
-      const headers = { 'Content-Type':'application/json' };
-      if (ACCESS_TOKEN) headers['Authorization'] = `Bearer ${ACCESS_TOKEN}`;
-
-      const res = await fetch(CREATE_URL, { method:'POST', headers, body: JSON.stringify(payload) });
+      const res = await fetch(CREATE_URL, {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type':'application/json' }),
+        body: JSON.stringify(payload)
+      });
       const data = await res.json();
 
       if(!res.ok || data.ok === false){
         throw new Error(data.message || `Falha ao criar agendamento (HTTP ${res.status})`);
       }
 
-      // Exemplo de retorno esperado:
-      // { ok:true, booking_id, payment: { provider:'pix', status:'pending', amount_cents, qr_code_url, ... } }
       alert('Agendamento confirmado com sucesso!');
       console.log('BOOKING CREATED:', data);
 
-      // Se houver PIX/checkout:
       if (data.payment?.qr_code_url) {
-        // redirecione para uma página de pagamento/PIX
-        // location.href = `pix.html?booking=${encodeURIComponent(data.booking_id)}`;
         window.open(data.payment.qr_code_url, '_blank');
       } else {
-        // volta para home ou “minha conta”
         location.href = 'index.html';
       }
 
@@ -232,7 +275,7 @@
     }
   });
 
-  btnBack.addEventListener('click', ()=> history.back());
+  document.getElementById('btnBack').addEventListener('click', ()=> history.back());
 
   // start
   loadQuote();
