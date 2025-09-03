@@ -1,38 +1,51 @@
-// js/login.js
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("formLogin");
   const goSignUp = document.getElementById("goSignUp");
   const btnVoltar = document.getElementById("btnVoltar");
 
-  // Usuário fictício
-  const mockUser = {
-    email: "teste@teste.com",
-    password: "123456"
-  };
+  const API = "https://primary-odonto.up.railway.app/webhook/barber/client/login";
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
 
-    if (email === mockUser.email && password === mockUser.password) {
-      // Guardar sessão fictícia
-      localStorage.setItem("auth", JSON.stringify({ email, time: Date.now() }));
+    try {
+      const res = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
 
-      alert("Login realizado com sucesso!");
-      window.location.href = "resumo.html"; // redireciona para relatórios
-    } else {
-      alert("E-mail ou senha inválidos.");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      if (data.ok) {
+        // guarda token e infos no localStorage
+        localStorage.setItem("auth", JSON.stringify({
+          client_id: data.client_id,
+          email,
+          token: data.token,
+          time: Date.now()
+        }));
+
+        alert("Login realizado com sucesso!");
+        window.location.href = "resumo.html";
+      } else {
+        alert(data.error || "E-mail ou senha inválidos.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro no login. Tente novamente.");
     }
   });
 
   goSignUp.addEventListener("click", () => {
-    alert("Funcionalidade de cadastro ainda não implementada (mock).");
+    window.location.href = "cadastro.html"; // tela de cadastro
   });
 
   btnVoltar.addEventListener("click", () => {
     history.back();
   });
 });
-
